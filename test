@@ -1,0 +1,11 @@
+CREATE TABLE MAN_TB_MONITORUSER(
+ op_id INTEGER primary key autoincrement,
+ account varchar(20),
+ password varchar(50),
+ real_name varchar(20),
+ role_id INTEGER,
+ update_time INTEGER
+);
+
+create index if not exists idx_man_th_alarmhistory on man_th_alarmhistory(module_code,alarm_time);
+
