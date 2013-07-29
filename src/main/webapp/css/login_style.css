@@ -1,0 +1,61 @@
+@charset "utf-8";
+/*----------CSS 通用属性----------*/
+body,html{margin:0; padding:0; background:#fff; font-size:12px; font-family:Arial, Helvetica, sans-serif,"宋体"; width:100%; height:100%; background-color:transparent; _overflow-x:hidden;}
+ul, p,h1,h2,h3,h4,h5,li{margin:0px; padding:0;list-style:none;}
+label, button, input[type="submit"], input[type="button"] {cursor:pointer;}
+.clear{clear:both;}
+.float_lef{float:left; display:inline;}
+.float_rig{float:right; display:inline;}
+img{border:none; margin:0; padding:0;}
+.font_wei{font-weight:bold;}
+.clearfix{zoom:1;}
+.clearfix:after{content: '\20'; display:block; clear:both;}
+.marg_lef5{margin-left:5px;}
+.marg_rig5{margin-right:5px;}
+.marg_lef10{margin-left:2px;}
+.padd10{padding:10px;}
+.width100{width:100%;}
+.width80{width:80%;}
+.width30{width:30%;}
+a{color:#2c6795; text-decoration:none; font-weight:normal;}
+a:link{color:#2c6795; text-decoration:none; font-weight:normal;}
+a:visited {color:#2c6795; text-decoration:none; font-weight:normal;}
+a:hover{color:#2c6795; text-decoration:underline; font-weight:normal;}
+a:active{color:#2c6795; text-decoration:none; font-weight:normal;}
+/*----------end CSS 通用属性----------*/
+
+/*--------------------start login--------------------------*/
+
+.login_content{background:url(../images/login/login_conbg.jpg) center center;}
+
+.login_box{position:absolute; width:799px; height:375px; background:url(../images/login_box.png) no-repeat;}
+
+.logo{ width:473px; height:58px; line-height:58px; background:url(../images/logo.png) no-repeat; margin-top:50px; margin-left:240px; display:table;}
+
+/*登录页面背景*/
+
+.login_bj{width:337px; height:217px; background:url(../images/login-bj.png) no-repeat; margin-left:350px; margin-top:100px;}
+
+.input{width:150px; height:18px; background:#FFFFFF; border:#3399CC solid 1px;}
+
+.input01{ width:77px; height:18px; background:#FFFFFF; border:#3399CC solid 1px; float:left; margin-top:5px; }
+
+.img{margin-top:5px; margin-left:10px; float:left;}
+
+
+.font01{ font-family:Arial, Helvetica, sans-serif"宋体"; font-size:12px; color:#FF0000;}
+
+/*登录-重置按钮*/
+
+.but01{background:url(../images/login/login_but01.gif) no-repeat; width:81px; height:32px; cursor:pointer; line-height:32px; margin-left:20px; float:left;}
+
+.but01_hover{background:url(../images/login/login_but01Hover.gif) no-repeat; width:81px; height:32px;}
+
+.but02{background:url(../images/login/con01.gif) no-repeat; width:81px; height:32px; cursor:pointer; line-height:32px; margin-left:20px; float:left;}
+
+.but02_hover{background:url(../images/login/con02.gif) no-repeat; width:81px; height:32px;}
+
+/* 表格内字体 */
+.font02{ font-family:Arial, Helvetica, sans-serif"宋体"; font-size:12px; color:#000000;}
+A { text-decoration: none} 
+/*--------------------end login--------------------------*/

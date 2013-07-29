@@ -1,0 +1,177 @@
+@charset "utf-8";
+
+body {
+	padding: 0px;
+	margin: 0;
+	overflow: hidden;
+}
+
+.l-link {
+	display: block;
+	height: 26px;
+	line-height: 26px;
+	padding-left: 10px;
+	text-decoration: underline;
+	color: #333;
+}
+
+.l-link2 {
+	text-decoration: underline;
+	color: white;
+}
+
+.l-layout-top {
+	background: #77B6DD;
+	color: White;
+}
+
+.l-layout-bottom {
+	background: #E5EDEF;
+	text-align: center;
+}
+/*表单样式*/
+.menuinput{
+	background:#FFFFFF url(../images/magnifier.png) right no-repeat;
+	border:#3399CC solid 1px;
+}
+
+.index_layout {
+	width: 100%;
+	height: 100%;
+}
+
+.index_layout_top { 
+	float: left;
+	height: 71px;
+	width: 100%;
+	
+}
+
+.index_layout_center { 
+	float: left;	
+	width: 100%;
+	
+}
+
+.index_layout_right {
+	width: 20%;
+	height: 90%;
+	float: right;
+}
+
+.index_layout_foor {
+	background: url(../images/footbg.gif);
+	height: 17px; 
+	padding-top : 3px;
+	float: left;
+	width: 100%;
+	position:absolute;
+	 top:100%;left:0; 
+	 margin-top:-20px; 
+	 
+	}
+
+
+
+
+em.error {
+	background: url("../images/unchecked.gif") no-repeat 3px 0px;
+	padding-left: 20px;
+	padding-bottom: 1px;
+	color: red;
+	font-size: 12px;
+	font-style: normal;
+	line-height: 20px;
+	height: 20px;
+}
+
+em.success {
+	background: url("../images/checked.gif") no-repeat 3px 0px;
+	padding-left: 5px;
+	padding-bottom: 1px;
+	color: black;
+	font-size: 12px;
+	font-style: normal;
+	height: 20px;
+}
+
+form.cmxform label.error {
+	margin-left: auto;
+	width: 250px;
+}
+
+em.error {
+	font-size: 12px;
+	
+}
+
+
+.loadmask {
+    z-index: 100;
+    position: absolute;
+    top:0;
+    left:0;
+    -moz-opacity: 0.5;
+    opacity: .50;
+    filter: alpha(opacity=50);
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    zoom: 1;
+}
+.loadmask-msg {
+    z-index: 20001;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border:0px solid #6593cf;
+   /*background: #c3daf9;
+    padding:2px;*/
+}
+.loadmask-msg div {
+    padding:5px 5px 5px 35px;
+    background: url('../script/view/loading/loading.gif') no-repeat 5px 5px;
+    line-height: 16px;
+	border:0px solid #a3bad9;
+    color:#222;
+    font:normal 11px tahoma, arial, helvetica, sans-serif;
+    cursor:wait;
+    height: 31px;
+}
+.masked {
+    overflow: hidden !important;
+}
+.masked-relative {
+    position: relative !important;
+}
+.masked-hidden {
+    visibility: hidden !important;
+}
+
+.xhx{border-bottom:1px dashed #b4dcff}
+
+.input0{
+background:url(../images/buttonback.jpg);
+height:20px;
+width:60px;
+border:0px;
+padding:3px 0px 0px 0px;
+font-size: 12px;
+cursor: pointer;
+}
+.ywjk{
+	width:259px;
+	height:182px;
+	background:url(../images/bj01.png) repeat;
+	cursor: pointer;
+}
+/*运维监控系统文字*/
+.font{
+	font-family:Arial, Helvetica, sans-serif"宋体";
+	font-size:12px;
+	color:#000000;
+	text-align: center;
+}
+.hidden{
+	display:none;
+}
