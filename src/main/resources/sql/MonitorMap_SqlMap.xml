@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="RTTI_MONITOR_MONITORMAP" >
+  <resultMap id="abatorgenerated_MonitorMapResult" class="com.palmcity.rtti.maintenancemonitor.bean.MonitorMap" >
+    <result column="MAP_NAME" property="mapName" jdbcType="VARCHAR" />
+    <result column="MAP_IMGURL" property="mapImgUrl" jdbcType="VARCHAR" />
+    <result column="MAP_CODE" property="mapCode" jdbcType="VARCHAR" />
+  </resultMap>
+   <!-- 查询拓扑图列表 -->
+  <select id="MonitorMap_queryMapListSelect" resultMap="abatorgenerated_MonitorMapResult">
+  	select MAP_NAME,MAP_IMGURL,MAP_CODE from MAN_TB_MONITORMAP
+  </select>
+
+  <!-- 拓扑图添加 -->
+  <insert id="MonitorMap_InsertMap" parameterClass="com.palmcity.rtti.maintenancemonitor.bean.MonitorMap" >
+    INSERT INTO MAN_TB_MONITORMAP (MAP_NAME,MAP_IMGURL,MAP_CODE)  VALUES (#mapName:VARCHAR#, #mapImgUrl:VARCHAR#, #mapCode:VARCHAR#)
+  </insert>
+
+  <!-- 拓扑图信息更新 -->
+  <update id="MonitorMap_updateMap" parameterClass="map">
+    UPDATE MAN_TB_MONITORMAP
+    SET 
+      MAP_NAME = #mapName:VARCHAR#, 
+      MAP_IMGURL = #mapImgUrl:VARCHAR#  
+     WHERE MAP_CODE = #mapCode:VARCHAR#
+  </update>
+  
+    <!-- 拓扑图删除 -->
+  <delete id="MonitorMap_deleteMap" parameterClass="map">
+    DELETE FROM MAN_TB_MONITORMAP
+    WHERE MAP_CODE = #mapCode:VARCHAR#
+  </delete>
+</sqlMap>

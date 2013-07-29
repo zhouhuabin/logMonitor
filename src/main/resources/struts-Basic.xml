@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" "struts-2.0.dtd" >
+<struts>
+	<package name="Basic" extends="struts-default">
+		<!-- 配置自定义拦截器 -->
+		<interceptors>
+			<interceptor name="systemDefaultInterceptor" class="SystemDefaultInterceptor">
+			</interceptor>
+			<interceptor-stack name="ststemDefaultStack">
+				<interceptor-ref name="systemDefaultInterceptor"></interceptor-ref>
+				<interceptor-ref name="timer"></interceptor-ref>
+				<interceptor-ref name="defaultStack" />
+			</interceptor-stack>
+		</interceptors>
+		<default-interceptor-ref name="ststemDefaultStack"></default-interceptor-ref>
+		<action name="parseXmlString" class="LoginAction" method="parseXmlString">
+			<result name="xmlMessage" type="plainText"></result>
+			<!-- 注意：struts2.1以后用 plainText -->
+		</action>
+		<action name="get_loginInfo" class="LoginAction" method="getLoginXml"> 
+                <result name="xmlMessage" type="plainText"></result>   
+      	 </action> 
+	</package>
+	
+	<package name="login" extends="struts-default">
+		<action name="RondamImage" class="ImageCheck">
+			<result type="stream">
+				<param name="contentType">image/jpeg</param>
+				<param name="inputName">inputStream</param>
+			</result>
+		</action>
+		<action name="login" class="LoginAction" method="login">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+		<action name="logout" class="LoginAction" method="logout">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+	</package>
+
+
+
+</struts>

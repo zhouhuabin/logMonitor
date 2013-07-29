@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE sqlMapConfig      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+
+<sqlMapConfig>
+	<!-- test  -->
+ 	<sqlMap resource="sql/monitorUser_SqlMap.xml"/>
+	<sqlMap resource="sql/alarmHistory_SqlMap.xml"/>
+	<sqlMap resource="sql/LogFileConfigure_SqlMap.xml"/>
+	<sqlMap resource="sql/MonitorMap_SqlMap.xml"/>
+	<sqlMap resource="sql/alarm_Ticket.xml"/>
+</sqlMapConfig>

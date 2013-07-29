@@ -1,0 +1,72 @@
+ <!-- JMX setting -->
+ <beans xmlns="http://www.springframework.org/schema/beans"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:context="http://www.springframework.org/schema/context"
+     xsi:schemaLocation="
+ http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+ http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.0.xsd">
+ 	<!-- 真正的暴露实现类 --> 
+     <bean id="exporter"
+         class="org.springframework.jmx.export.MBeanExporter">
+         <!--property name="assembler" ref="assembler" />
+         <property name="namingStrategy" ref="namingStrategy" />
+         -->
+<!--         <property name="autodetect" value="true" />-->
+         <!-- 这种方式简单，推荐使用 -->
+          <property name="beans">
+	      <map>
+	        <entry key="bean:name=managerJMX" value-ref="managerJMX"/>
+	        <entry key="bean:name=logLevelJMX" value-ref="logLevelJMX"/>
+	      </map>
+    	</property> 
+     
+     </bean>
+ 	
+ 	
+ 	<!-- 定义注解属性源，这种方式复杂些，不使用   -->
+     <!--<bean id="jmxAttributeSource"
+         class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource" />-->
+    <!-- 定义元数据属性源 -->  
+     <!--<bean id="attributeSource"  
+                class="org.springframework.jmx.export.metadata.AttributesJmxAttributeSource">  
+         <property name="attributes">  
+             <bean  
+             class="org.springframework.metadata.commons.CommonsAttributes" />  
+         </property>  
+     </bean>
+     
+     -->
+     <!-- 使用源码级元数据创建分配器 -->
+     <!--<bean id="assembler"
+         class="org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler">
+         <property name="attributeSource" ref="jmxAttributeSource" />
+     </bean>
+     -->
+     <!--使用接口来创建分配器-->  
+     <!--<bean id="assemblerInter"  
+                 class="org.springframework.jmx.export.assembler.InterfaceBasedMBeanInfoAssembler">  
+         <property name="managedInterfaces">  
+             <value>  
+                 com.caits.lbs.framework.dao.IBusinessDAO  
+             </value>  
+         </property>  
+     </bean>
+     -->
+     <!-- 注解名称策略 -->
+     <!--<bean id="namingStrategy"
+         class="org.springframework.jmx.export.naming.MetadataNamingStrategy">
+         <property name="attributeSource" ref="jmxAttributeSource" />
+     </bean>
+ 	-->
+ 	<!-- 修改日志级别的实例-->
+ 	<bean id="logLevelJMX" 
+ 		class="com.caits.lbs.framework.services.jmx.LogLevelAnnotation"
+ 		lazy-init="default">
+ 	</bean>
+ 	
+ 	<bean id="managerJMX"
+ 		class="com.caits.lbs.framework.services.jmx.JMXManager"
+ 		lazy-init="default" scope="singleton">
+ 		<property name="mExporter" ref="exporter"></property>
+ 	</bean>
+</beans>

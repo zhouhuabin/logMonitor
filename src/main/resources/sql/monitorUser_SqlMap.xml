@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="RTTI_MONITOR_MONITORUSER" >
+  <resultMap id="abatorgenerated_MonitorUserResult" class="com.palmcity.rtti.maintenancemonitor.bean.MonitorUser" >
+    <result column="account" property="account" jdbcType="VARCHAR" />
+    <result column="op_id" property="op_id" jdbcType="DECIMAL" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="real_name" property="real_name" jdbcType="VARCHAR" />
+    <result column="role_id" property="role_id" jdbcType="VARCHAR" />
+    <result column="update_time" property="update_time" jdbcType="DECIMAL" />
+    <result column="mobile" property="mobile" jdbcType="VARCHAR" />
+  </resultMap>
+  
+   <!-- 用户登录 -->
+  <select id="SysOperatorLogin" resultClass="com.palmcity.rtti.maintenancemonitor.bean.MonitorUser">
+  	select account,op_id,password,real_name,role_id,update_time,mobile
+  	from MAN_TB_MONITORUSER where account = #account:VARCHAR# 
+  </select>
+  
+  <!-- 帐户添加 -->
+  <insert id="monitorUser_insert" parameterClass="com.palmcity.rtti.maintenancemonitor.bean.MonitorUser" >
+    INSERT INTO MAN_TB_MONITORUSER (account,op_id,password,real_name,role_id,update_time,mobile)
+    VALUES (#account:VARCHAR#, #op_id:DECIMAL#, #password:VARCHAR#, #real_name:VARCHAR#,
+      #role_id:DECIMAL#, #update_time:DECIMAL#,#mobile:VARCHAR#)
+  </insert>
+  
+  <!-- 帐户删除 -->
+  <delete id="monitorUser_deleteByPrimaryKey" parameterClass="map">
+    DELETE FROM MAN_TB_MONITORUSER
+    WHERE op_id = #op_id:DECIMAL#
+  </delete>
+  
+  
+  <!-- 帐户更新 -->
+  <update id="monitorUser_updateByPrimaryKey" parameterClass="com.palmcity.rtti.maintenancemonitor.bean.MonitorUser" >
+    UPDATE MAN_TB_MONITORUSER
+    SET account = #account:VARCHAR#,
+      real_name = #real_name:VARCHAR#,
+      role_id = #role_id:VARCHAR#,
+      update_time = #update_time:DECIMAL#,
+      mobile= #mobile:VARCHAR# 
+    WHERE op_id = #op_id:DECIMAL#
+  </update>
+  <!-- 帐户修改密码 -->
+  <update id="monitorUser_changePasswordByPrimaryKey" parameterClass="map" >
+    UPDATE MAN_TB_MONITORUSER
+    SET password = #newpassword:VARCHAR#,
+      update_time = #update_time:DECIMAL#
+    WHERE op_id = #op_id:DECIMAL#
+  </update>
+  
+   <!-- 帐户详情 -->
+  <select id="monitorUser_selectByPrimaryKey" resultMap="abatorgenerated_MonitorUserResult" parameterClass="map" >
+    SELECT account,op_id,password,real_name,role_id,update_time,mobile
+    FROM MAN_TB_MONITORUSER
+    WHERE op_id = #op_id:DECIMAL#
+  </select>
+  
+  
+  <!-- 系统用户下拉列表 -->
+  <select id="monitorUser_queryListSelect" resultClass="com.palmcity.rtti.maintenancemonitor.bean.MonitorUser" parameterClass="map" >
+  	select account,op_id,password,real_name,role_id,update_time,mobile
+  	from MAN_TB_MONITORUSER tb 
+  	<dynamic prepend="WHERE">
+	  	<isNotEmpty prepend="and" property="v_account"> 
+	  		like('%$v_account$%',tb.account)
+	  	</isNotEmpty>
+  	</dynamic>
+  	limit 500 offset 0 
+  </select>
+
+  
+  <!-- 帐户是否已存在 -->
+  <select id="monitorUser_selectCountByIdAccount" resultClass="Long" parameterClass="map" >
+    SELECT count(1) count
+    FROM MAN_TB_MONITORUSER 
+    where account=#account:VARCHAR# 
+    <isNotNull prepend="and" property="op_id" >
+	        op_id != #op_id:DECIMAL#
+	</isNotNull>
+  </select>
+  
+  <!-- 取帐户序列最大值 -->
+ <select id="monitorUser_opid_seq" resultClass="Integer">
+ 	select max(ifnull(op_id,0)) from MAN_TB_MONITORUSER
+ </select>
+</sqlMap>

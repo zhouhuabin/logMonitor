@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="RTTI_MONITOR_LogFileConfigure" >
+  <resultMap id="abatorgenerated_MonitorLogFileConfigureResult" class="com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure" >
+    <result column="Module_Code" property="moduleCode" jdbcType="VARCHAR" />
+    <result column="Module_Desc" property="moduleDesc" jdbcType="VARCHAR" />
+    <result column="url" property="url" jdbcType="VARCHAR" />
+    <result column="smsAlarm" property="smsAlarm" jdbcType="DECIMAL" />
+    <result column="mailAlarm" property="mailAlarm" jdbcType="DECIMAL" />
+    <result column="alarmCondition" property="alarmCondition" jdbcType="VARCHAR" />
+    <result column="errorValve" property="erroValue" jdbcType="DECIMAL" />
+    <result column="encoding" property="encoding" jdbcType="VARCHAR" />
+    <result column="carCount" property="carCount_max" jdbcType="DECIMAL" />
+    <result column="relationAlarm" property="relationAlarm" jdbcType="VARCHAR" />
+    <result column="HOT_X" property="hot_x" jdbcType="DECIMAL" />
+    <result column="HOT_Y" property="hot_y" jdbcType="DECIMAL" />
+    <result column="MAP_CODE" property="mapCode" jdbcType="VARCHAR" />
+    <result column="Module_Type" property="moduleType" jdbcType="VARCHAR" />
+  </resultMap>
+  
+   <!-- 查询模块列表 -->
+  <select id="LogFileConfigure_queryListSelect" resultMap="abatorgenerated_MonitorLogFileConfigureResult">
+  	select Module_Type,Module_Code,Module_Desc,url,smsAlarm,mailAlarm,alarmCondition ,errorValve,encoding,carCount,relationAlarm,
+  	HOT_X,HOT_Y,MAP_CODE from MAN_TB_MONITORMAP_HOT 
+  </select>
+   <!-- 查询指定类别，指定拓扑图代码的模块列表 -->
+  <select id="LogFileConfigure_selectModuleCountByMapCode" resultClass="long" parameterClass="map">
+  	select count(*) from MAN_TB_MONITORMAP_HOT where MAP_CODE = #mapCode:VARCHAR#
+  </select>
+  <!-- 查询指定类别，指定拓扑图代码的模块列表 -->
+  <select id="LogFileConfigure_selectByModuleType" resultMap="abatorgenerated_MonitorLogFileConfigureResult">
+  	select Module_Type,Module_Code,Module_Desc,url,smsAlarm,mailAlarm,alarmCondition ,errorValve,encoding,carCount,relationAlarm,
+  	HOT_X,HOT_Y,MAP_CODE from MAN_TB_MONITORMAP_HOT where Module_Type = #moduleType:VARCHAR#
+  </select>
+  <!-- 模块添加 -->
+  <insert id="LogFileConfigure_insert" parameterClass="com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure" >
+    INSERT INTO MAN_TB_MONITORMAP_HOT (Module_Type,Module_Code,Module_Desc,url,smsAlarm,mailAlarm,alarmCondition ,errorValve,encoding,
+    carCount,relationAlarm,HOT_X,HOT_Y,MAP_CODE)  VALUES (#moduleType:VARCHAR#, #moduleCode:VARCHAR#, #moduleDesc:VARCHAR#,
+    #url:VARCHAR#, #smsAlarm:DECIMAL#,#mailAlarm:DECIMAL#, #alarmCondition:VARCHAR#,#erroValue:DECIMAL#,#encoding:VARCHAR#,
+    #carCount_max:DECIMAL#,#relationAlarm:VARCHAR#,#hot_x:DECIMAL#,#hot_y:DECIMAL#,#mapCode:VARCHAR#)
+  </insert>
+  
+    <!-- 模块是否已存在 -->
+  <select id="LogFileConfigure_selectCountByModuleCode" resultClass="long" parameterClass="map" >
+    SELECT count(1) count
+    FROM MAN_TB_MONITORMAP_HOT 
+    where Module_Code=#moduleCode:VARCHAR# 
+  </select>
+  <!-- 模块信息更新 -->
+  <update id="LogFileConfigure_updateByModuleCode" parameterClass="com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure">
+    UPDATE MAN_TB_MONITORMAP_HOT
+    SET 
+      Module_Code = #moduleCode:VARCHAR#,
+      Module_Desc = #moduleDesc:VARCHAR#,
+      url = #url:VARCHAR#,
+      smsAlarm=#smsAlarm:DECIMAL#,
+      mailAlarm=#mailAlarm:DECIMAL#,
+      alarmCondition=#alarmCondition:VARCHAR#,
+      errorValve=#erroValue:DECIMAL#,
+      encoding=#encoding:VARCHAR#,
+      carCount=#carCount_max:DECIMAL#,
+      relationAlarm=#relationAlarm:VARCHAR#,
+      HOT_X=#hot_x:DECIMAL#,
+      HOT_Y=#hot_y:DECIMAL#,
+      Module_Type=#moduleType:VARCHAR#,
+      MAP_CODE=#mapCode:VARCHAR#
+    WHERE Module_Code = #moduleCode:VARCHAR#
+  </update>
+  
+    <!-- 模块删除 -->
+  <delete id="LogFileConfigure_deleteByModuleCode" parameterClass="map">
+    DELETE FROM MAN_TB_MONITORMAP_HOT
+    WHERE Module_Code = #moduleCode:VARCHAR#
+  </delete>
+</sqlMap>

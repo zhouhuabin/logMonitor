@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="RTTI_MONITOR_Alarm_Ticket" >
+  <resultMap id="abatorgenerated_Alarm_TicketResult" class="com.palmcity.rtti.maintenancemonitor.bean.Alarm_Ticket" >
+     <result column="alarm_code" property="alarm_code" jdbcType="VARCHAR" />
+     <result column="moduleType" property="moduleType" jdbcType="VARCHAR" />
+     <result column="moduleCode" property="moduleCode" jdbcType="VARCHAR" />
+     <result column="moduleDesc" property="moduleDesc" jdbcType="VARCHAR" />
+     <result column="finish_time" property="finish_time" jdbcType="DECIMAL" />
+     <result column="report_way" property="report_way" jdbcType="DECIMAL" />
+     <result column="city" property="city" jdbcType="VARCHAR" />
+     <result column="Influence" property="influence" jdbcType="DECIMAL" />
+     <result column="MonitorMethod" property="monitorMethod" jdbcType="VARCHAR" />
+     <result column="alarm_content" property="alarm_content" jdbcType="VARCHAR" />
+     <result column="Diagnosis" property="diagnosis" jdbcType="VARCHAR" />
+     <result column="Measures" property="measures" jdbcType="VARCHAR" />
+     <result column="Result" property="result" jdbcType="VARCHAR" />
+     <result column="alarmFilePath" property="alarmFilePath" jdbcType="VARCHAR" />
+     <result column="date_Time" property="date_Time" jdbcType="DECIMAL" />
+     <result column="alarm_time" property="alarm_time" jdbcType="DECIMAL" />
+     <result column="deal_time" property="deal_time" jdbcType="DECIMAL" />
+     <result column="out_finish_time" property="out_finish_time" jdbcType="DECIMAL" />
+     <result column="form_date" property="form_date" jdbcType="DECIMAL" />
+     <result column="userRealName" property="userRealName" jdbcType="VARCHAR" />
+   </resultMap>
+  <!-- 故障单添加 -->
+  <insert id="alarm_Ticket_insert"  parameterClass="map">
+    INSERT INTO MAN_TB_ALARM_TICKET  (alarm_code,moduleType,moduleCode,moduleDesc,finish_time,report_way,city,Influence,MonitorMethod,alarm_content,Diagnosis,Measures,Result,alarmFilePath,date_Time,alarm_time,deal_time,out_finish_time,form_date,userRealName)
+    VALUES (#alarm_code:VARCHAR#,#moduleType:VARCHAR#,#moduleCode:VARCHAR#,#moduleDesc:VARCHAR#,#finish_time:DECIMAL#,#report_way:DECIMAL#,#city:VARCHAR#,#Influence:DECIMAL#,#MonitorMethod:VARCHAR#,#alarm_content:VARCHAR#,#Diagnosis:VARCHAR#,#Measures:VARCHAR#,#Result:VARCHAR#,#alarmFilePath:VARCHAR#,#date_Time:DECIMAL#,#alarm_time:DECIMAL#,#deal_time:DECIMAL#,#out_finish_time:DECIMAL#,#form_date:DECIMAL#,#userRealName:VARCHAR#)
+  </insert>
+  <!-- 故障单详情  -->
+  <select id="alarm_Ticket_selectByPrimaryKey" resultMap="abatorgenerated_Alarm_TicketResult" parameterClass="map" >
+    SELECT alarm_code,moduleType,moduleCode,moduleDesc,finish_time,report_way,city,Influence,MonitorMethod,alarm_content,Diagnosis,Measures,Result,alarmFilePath,date_Time,alarm_time,deal_time,out_finish_time,form_date,userRealName
+    FROM MAN_TB_ALARM_TICKET 
+    WHERE  moduleCode =#moduleCode:VARCHAR# and alarm_time =#alarm_time:DECIMAL#
+  </select>
+  
+    <!--故障单是否已存在 -->
+  <select id="alarm_Ticket_selectCountByIAlarm_code" resultClass="Long" parameterClass="map" >
+    SELECT count(1) count
+    FROM MAN_TB_ALARM_TICKET 
+    where alarm_code=#alarm_code:VARCHAR# 
+  </select>
+  
+</sqlMap>

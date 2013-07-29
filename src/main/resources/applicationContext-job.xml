@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+	<!-- 定时调度模块 -->
+	<bean id="synToMenJob" class="com.palmcity.rtti.maintenancemonitor.job.DbDataScheduleDealwithJob" scope="singleton" depends-on="logFileScanThread" init-method="init">
+	    <property name="sqlIds">
+	        <list>
+	            <value>alarmHistory_deleteByPrimaryKey</value>
+	        </list>
+	    </property>
+	    <property name="dao" ref="baseDAO"/><!--  数据库通用操作接口 -->
+	    <property name="remainDays" value="365"/><!-- 保留数据天数 -->
+	    <property name="configure" ref="monitorConfigure"></property> 
+	</bean>
+	<bean id="synJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	    <property name="targetObject" ref="synToMenJob"/>
+	    <property name="targetMethod" value="taskJob"/>
+	</bean>
+	<!-- 配置调度任务,简单模式   -->
+	<bean id="simpleJobTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+	    <property name="jobDetail" ref="synJobDetail"/>
+	    <property name="repeatInterval" value="600000"/>
+	</bean>
+	<!-- 配置调度任务  -->
+	<bean id="cronJobTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+	    <property name="jobDetail" ref="synJobDetail"/>
+	    <property name="cronExpression">
+	        <value>0 0 22 * * ? *</value><!-- 每天晚上22点 -->
+	    </property>
+	</bean>
+	<!-- 启动调度 -->
+	<bean id="startScheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+	    <property name="triggers">
+           <list>
+               <ref bean="simpleJobTrigger"/>
+           </list>
+        </property>
+	</bean>
+
+</beans>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+	<!-- 系统属性文件 -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>classpath:system.properties</value>
+		</property>
+	</bean>
+	
+	<!-- 配置全局的拦截器 -->
+	<bean id="SystemDefaultInterceptor" class="com.caits.lbs.framework.action.SystemDefaultInterceptor"
+		scope="singleton">
+	</bean>
+	
+	
+	<!-- 工具类 -->
+	<bean id="SpringBUtils" class="com.caits.lbs.framework.utils.SpringBUtils"
+		scope="singleton"></bean>
+
+	<!-- 全局属性类 -->
+	<bean id="constants" class="com.palmcity.rtti.maintenancemonitor.action.UserConstants">
+		<property name="max_log_output" value="${max_log_output}"></property>
+		<property name="internet_path" value="http://127.1/log"></property>
+	</bean>
+
+	 
+	<!-- 配置数据源 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${db_driverClass}" />
+		<property name="jdbcUrl" value="${db_jdbcUrl}" />
+		<property name="user" value="${db_user}" />
+		<property name="password" value="${db_password}" />
+		<property name="minPoolSize" value="3"></property>
+		<property name="initialPoolSize" value="3"></property>
+		<property name="maxPoolSize" value="15"></property>
+		<!-- <property name="connectionTesterClassName" value="man_tb_monitoruser"></property> -->
+	</bean>
+	<!-- 注入ibaits配置文件 -->
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:SqlMapConfig.xml</value>
+		</property>
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 持久层 -->
+	<bean id="baseDAO" class="com.caits.lbs.framework.dao.impl.BusinessDAOImpl">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<!-- struts-action访问类
+	<bean id="BaseAction" class="com.palmcity.rtti.maintenancemonitor.action.BaseAction" scope="prototype">
+		<property name="constants" ref="constants" />
+	</bean>
+	 -->
+	<!-- 验证码 -->
+	 <bean name="ImageCheck" class="com.caits.lbs.framework.action.ImageCheck" scope="prototype">
+	</bean> 
+	
+	<!-- 通用服务处理实例 -->
+	<bean id="localParser" class="com.common.ajax.server.RequestLocalParser">
+		<property name="constant" ref="constants"></property>
+	</bean>
+	
+	<!-- 用户登录 -->
+	<bean id="LoginAction" class="com.palmcity.rtti.maintenancemonitor.action.LoginAction" scope="prototype" depends-on="localParser">
+		<property name="constants" ref="constants" />
+		<property name="serviceParser" ref="localParser"></property>
+	</bean>
+</beans>
