@@ -7,14 +7,10 @@
 
 package com.palmcity.rtti.maintenancemonitor.bean;
 
-import groovy.lang.GroovyClassLoader;
-
 import java.io.File;
-import java.net.URL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.groovy.control.CompilationFailedException;
 import org.springframework.util.Assert;
 
 import com.caits.lbs.bean.dbmodel.ETBase;
@@ -112,7 +108,7 @@ public class LogFileConfigure extends ETBase {
 	//ClassLoader cl = getClass().getClassLoader();
 	ClassLoader cl= LogFileConfigure.class.getClassLoader();
 	/** groovy类装载器 */
-	GroovyClassLoader groovyCl = new GroovyClassLoader(cl);
+	//GroovyClassLoader groovyCl = new GroovyClassLoader(cl);
 
 	/** 本配置是否可以工作 */
 	private boolean enable = true;
@@ -489,7 +485,7 @@ public class LogFileConfigure extends ETBase {
 				String str_file = FileHelper.fileToString(groovyFile,UserConstants.SouceCodeEncoding);
 				str_file = str_file.replace(ALARM_CONDITION,
 						Base64Codec.decode(getAlarmCondition()));
-				groovyConditionClass = groovyCl.parseClass(str_file);// 这个返回true
+				//groovyConditionClass = groovyCl.parseClass(str_file);// 这个返回true
 				lastObj = (MonitorLogData) groovyConditionClass.newInstance();
 				lastObj.setModuleType(getModuleType());
 				lastObj.setModuleCode(getModuleCode());
@@ -514,12 +510,7 @@ public class LogFileConfigure extends ETBase {
 				_log.error(String.format("模块%s创建groovy实例%s错误,非法访问" , getModuleCode(), typeConf.getProcessClass()),
 						e);
 				setEnable(false);
-			} catch (CompilationFailedException e) {
-				_log.error(
-						String.format("模块%s创建groovy实例%s错误,语法错误" , getModuleCode(), typeConf.getGroovyFilePath()),
-						e);
-				setEnable(false);
-			} catch (Exception e) {
+			}  catch (Exception e) {
 				_log.error(
 						String.format("模块%s创建groovy实例%s错误,未知错误" , getModuleCode(), typeConf.getGroovyFilePath()),
 						e);
