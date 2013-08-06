@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="RTTI_MONITOR_Module_info" >
+  <resultMap id="abatorgenerated_ModuleInfoResult" class="com.palmcity.rtti.maintenancemonitor.bean.ModuleInfo" >
+     <result column="Module_ID" property="Module_ID" jdbcType="DECIMAL" />
+     <result column="Module_Desc" property="Module_Desc" jdbcType="VARCHAR" />
+     <result column="url" property="url" jdbcType="VARCHAR" />     
+     <result column="alarmCondition" property="alarmCondition" jdbcType="VARCHAR" />
+     <result column="errorValve" property="errorValve" jdbcType="DECIMAL" />
+     <result column="timeValue" property="timeValue" jdbcType="DECIMAL" />
+     <result column="ScanState" property="ScanState" jdbcType="VARCHAR" />
+     <result column="cityName" property="cityName" jdbcType="VARCHAR" />
+     <result column="Module_TYPE_ID" property="Module_Type_Id" jdbcType="DECIMAL" />
+     <result column="encoding" property="encoding" jdbcType="VARCHAR" />
+     <result column="MODULE_INFO_AlARMTIME" property="module_Info_AlarmTime" jdbcType="VARCHAR" />
+   </resultMap>
+
+  <!--模块列表-->
+  <select id="moduleInfo_queryListSelect" resultMap="abatorgenerated_ModuleInfoResult" parameterClass="map" >
+    SELECT Module_TYPE_ID,Module_ID,Module_Desc,url,alarmCondition,errorValve,timeValue,ScanState,cityName,encoding,MODULE_INFO_AlARMTIME 
+    FROM NEW_TB_MODULE_INFO th
+    where Module_TYPE_ID>-1 
+    <isNotEmpty prepend="and" property="module_type_id"> th.Module_TYPE_ID=#module_type_id:INTEGER#</isNotEmpty>
+  </select>
+ <!-- 添加模块 -->
+  <insert id="moduleInfo_insert"  parameterClass="map">
+    INSERT INTO NEW_TB_MODULE_INFO  (Module_TYPE_ID,Module_Desc,url,alarmCondition,errorValve,timeValue,ScanState,cityName,encoding,MODULE_INFO_AlARMTIME)
+    VALUES (#module_type_id:DECIMAL#,#module_desc:VARCHAR#,#url:VARCHAR#,#alarmcondition:VARCHAR#,#errorvalve:DECIMAL#,#timevalue:DECIMAL#,#scanstate:VARCHAR#,#cityname:VARCHAR#,#encoding:VARCHAR#,#module_info_alarmtime:VARCHAR#)
+  </insert>
+  <!-- 模块删除 -->
+  <delete id="moduleInfo_deleteById" parameterClass="map">
+    DELETE FROM NEW_TB_MODULE_INFO
+     WHERE Module_ID = #module_id:DECIMAL#
+  </delete>
+  
+  <!-- 模块更新 -->
+  <update id="moduleInfo_editorById" parameterClass="map" >
+    UPDATE NEW_TB_MODULE_INFO
+    SET Module_Desc = #module_desc:VARCHAR#,
+      url = #url:VARCHAR#,
+      alarmCondition = #alarmcondition:VARCHAR#,
+      errorValve = #errorvalve:DECIMAL#,
+      timeValue= #timevalue:DECIMAL#, 
+      ScanState= #scanstate:VARCHAR#,
+      cityName=#cityname:VARCHAR#,
+      Module_TYPE_ID=#module_type_id:DECIMAL#,
+      encoding=#encoding:VARCHAR#,
+      MODULE_INFO_AlARMTIME=#module_info_alarmtime:VARCHAR#
+    WHERE Module_ID = #module_id:DECIMAL#
+  </update>
+  
+  
+  
+</sqlMap>

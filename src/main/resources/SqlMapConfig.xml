@@ -8,7 +8,9 @@
 	<!-- test  -->
  	<sqlMap resource="sql/monitorUser_SqlMap.xml"/>
 	<sqlMap resource="sql/alarmHistory_SqlMap.xml"/>
-	<sqlMap resource="sql/LogFileConfigure_SqlMap.xml"/>
+	<!-- sqlMap resource="sql/LogFileConfigure_SqlMap.xml"/ -->
 	<sqlMap resource="sql/MonitorMap_SqlMap.xml"/>
 	<sqlMap resource="sql/alarm_Ticket.xml"/>
+	<sqlMap resource="sql/Module_Info.xml"/>
+	<sqlMap resource="sql/Module_Type.xml"/>
 </sqlMapConfig>

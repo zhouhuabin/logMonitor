@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="RTTI_MONITOR_Module_type" >
+  <resultMap id="abatorgenerated_ModuleTypeResult" class="com.palmcity.rtti.maintenancemonitor.bean.ModuleType" >
+     <result column="Module_TYPE_ID" property="Module_Type_Id" jdbcType="DECIMAL" />
+     <result column="Module_TYPE_NAME" property="Module_Type_Name" jdbcType="VARCHAR" />
+     <result column="MODULE_TYPE_FIELD" property="Module_Type_Field" jdbcType="VARCHAR" />
+     <result column="MODULE_TYPE_FIELD_ZN" property="Module_Type_Field_Zn" jdbcType="VARCHAR" />
+     <result column="MODULE_TYPE_STATIC" property="Module_Type_Static" jdbcType="VARCHAR" />
+     <result column="MODULE_TYPE_AlARMTIME" property="module_type_alarmtime" jdbcType="VARCHAR" />
+     <result column="threadInterval" property="threadInterval" jdbcType="DECIMAL" />
+   </resultMap>
+
+  <!--模板列表-->
+  <select id="moduleType_queryListSelect" resultMap="abatorgenerated_ModuleTypeResult" parameterClass="map" >
+    SELECT Module_TYPE_ID,Module_TYPE_NAME,MODULE_TYPE_FIELD,MODULE_TYPE_FIELD_ZN,MODULE_TYPE_STATIC,MODULE_TYPE_AlARMTIME,threadInterval 
+     FROM NEW_TB_MODULE_TYPE
+  </select>
+  <!-- 添加模板 -->
+  <insert id="moduleType_insert"  parameterClass="map">
+    INSERT INTO NEW_TB_MODULE_TYPE  (Module_TYPE_NAME,MODULE_TYPE_FIELD,MODULE_TYPE_FIELD_ZN,MODULE_TYPE_STATIC,MODULE_TYPE_AlARMTIME,threadInterval)
+    VALUES (#module_type_name:VARCHAR#,#module_type_field:VARCHAR#,#module_type_field_zn:VARCHAR#,#module_type_static:VARCHAR#,#module_type_alarmtime:VARCHAR#,#threadinterval:DECIMAL#)
+  </insert>
+  <!-- 模板删除 -->
+  <delete id="moduleType_deleteById" parameterClass="map">
+    DELETE FROM NEW_TB_MODULE_TYPE
+     WHERE Module_TYPE_ID = #module_type_id:VARCHAR#
+  </delete>
+</sqlMap>

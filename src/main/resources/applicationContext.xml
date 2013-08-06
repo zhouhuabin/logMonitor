@@ -15,7 +15,6 @@
 		scope="singleton">
 	</bean>
 	
-	
 	<!-- 工具类 -->
 	<bean id="SpringBUtils" class="com.caits.lbs.framework.utils.SpringBUtils"
 		scope="singleton"></bean>

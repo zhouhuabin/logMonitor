@@ -20,6 +20,7 @@
 		<action name="get_loginInfo" class="LoginAction" method="getLoginXml"> 
                 <result name="xmlMessage" type="plainText"></result>   
       	 </action> 
+      	 
 	</package>
 	
 	<package name="login" extends="struts-default">
@@ -36,7 +37,24 @@
 			<result name="xmlMessage" type="plainText"></result>
 		</action>
 	</package>
-
-
-
+	<!-- 业务实现action -->
+	<package name="service" extends="struts-default">
+		<action name="LogVluesScan" class="com.palmcity.rtti.maintenancemonitor.service.LogVluesScan" method="commonActionParser">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+		<action name="ModuleType" class="com.palmcity.rtti.maintenancemonitor.service.ModuleTypeService" method="commonActionParser">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+		<action name="ModuleInfo" class="com.palmcity.rtti.maintenancemonitor.service.ModuleInfoService" method="commonActionParser">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+		<action name="ModuleData" class="com.palmcity.rtti.maintenancemonitor.service.MonitiorService" method="commonActionParser">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+		<action name="AlarmService" class="com.palmcity.rtti.maintenancemonitor.service.AlarmService" method="commonActionParser">
+			<result name="xmlMessage" type="plainText"></result>
+		</action>
+	</package>
+	
+	
 </struts>

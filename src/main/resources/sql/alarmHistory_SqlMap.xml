@@ -2,35 +2,34 @@
 <!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
 <sqlMap namespace="RTTI_MONITOR_ALARMHISTORY" >
   <resultMap id="abatorgenerated_AlarmHistoryResult" class="com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory" >
-    <result column="alarm_content" property="alarm_content" jdbcType="VARCHAR" />
-    <result column="alarm_time" property="alarm_time" jdbcType="INTEGER" />
-    <result column="deal_time" property="deal_time" jdbcType="BigInt" />
-    <result column="finish_time" property="finish_time" jdbcType="INTEGER" />
-    <result column="module_code" property="module_code" jdbcType="VARCHAR" />
-    <result column="moduletype" property="moduletype" jdbcType="VARCHAR"/>
-    <result column="report_way" property="report_way" jdbcType="INTEGER"/>
-    <result column="status" property="status" jdbcType="INTEGER"/>
-    <result column="deal_opid" property="deal_opid" jdbcType="INTEGER"/>
-    <result column="deal_opname" property="deal_opname" jdbcType="VARCHAR"/>
-    <result column="update_time" property="update_time" jdbcType="INTEGER" />
-    <result column="data_time" property="data_time" jdbcType="INTEGER" />
+     <result column="Module_Type_Id" property="Module_Type_Id" jdbcType="INTEGER"/>
+     <result column="Module_ID" property="Module_ID" jdbcType="INTEGER" />
+     <result column="Module_Desc" property="Module_Desc" jdbcType="VARCHAR" />
+     <result column="data_time" property="data_time" jdbcType="INTEGER" />
+     <result column="deal_time" property="deal_time" jdbcType="INTEGER" />
+     <result column="finish_time" property="finish_time" jdbcType="INTEGER" />
+     <result column="status" property="status" jdbcType="INTEGER"/>
+     <result column="report_way" property="report_way" jdbcType="INTEGER"/>
+     <result column="text" property="text" jdbcType="VARCHAR"/>
+     <result column="update_time" property="update_time" jdbcType="INTEGER" />
+     <result column="deal_opname" property="deal_opname" jdbcType="VARCHAR" />
    </resultMap>
   <!-- 报警记录添加 -->
   <insert id="alarmHistory_insert" parameterClass="com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory" >
-    INSERT INTO MAN_TH_ALARMHISTORY (moduletype,module_code,alarm_content,alarm_time,report_way,status,update_time,data_time)
-    VALUES (#moduletype:VARCHAR#, #module_code:VARCHAR#, #alarm_content:VARCHAR#, #alarm_time:INTEGER#,
-      #report_way:INTEGER#, #status:INTEGER#,#update_time:INTEGER#,#data_time:INTEGER#)
+    INSERT INTO MAN_TH_ALARMHISTORY (Module_Type_Id,Module_ID,Module_Desc,data_time,deal_time,finish_time,status,report_way,text,update_time,deal_opname)
+    VALUES (#Module_Type_Id:INTEGER#, #Module_ID:INTEGER#,#Module_Desc:VARCHAR#,#data_time:INTEGER#,#deal_time:INTEGER#,
+      #finish_time:INTEGER#, #status:INTEGER#,#report_way:INTEGER#,#text:VARCHAR#,#update_time:INTEGER#,#deal_opname:VARCHAR#)
   </insert>
   
   <!-- 报警记录删除(单条) -->
   <delete id="alarmHistory_deleteByPrimaryKey" parameterClass="map">
     DELETE FROM MAN_TH_ALARMHISTORY
-    WHERE module_code =#module_code:VARCHAR# and alarm_time between #startTime:INTEGER# and  #endTime:INTEGER# 
+    WHERE Module_ID =#Module_ID:INTEGER# and data_time between #startTime:INTEGER# and  #endTime:INTEGER# 
   </delete>
   <!-- 报警记录删除 ，删除模块的所有报警-->
   <delete id="alarmHistory_deleteAlarmByModule" parameterClass="map">
     DELETE FROM MAN_TH_ALARMHISTORY
-    WHERE module_code =#module_code:VARCHAR# 
+    WHERE Module_ID =#Module_ID:INTEGER# 
   </delete>
   
   <!-- 开始处理报警更新 -->
@@ -39,9 +38,8 @@
     SET deal_time = #deal_time:INTEGER#,
       status = #status:INTEGER#,
       update_time = #update_time:INTEGER#,
-      deal_opid = #deal_opid:INTEGER#,
-      alarm_time=#alarm_time:INTEGER#
-    WHERE module_code =#module_code:VARCHAR# and alarm_time =#alarm_time:INTEGER#
+      deal_opname = #deal_opname:VARCHAR#
+    WHERE Module_ID =#Module_ID:INTEGER# and data_time =#data_time:INTEGER#
   </update>
   
    <!-- 结束处理报警更新 -->
@@ -50,38 +48,37 @@
     SET finish_time = #finish_time:INTEGER#,
       status = #status:INTEGER#,
       update_time = #update_time:INTEGER#
-    WHERE module_code =#module_code:VARCHAR# and alarm_time =#alarm_time:INTEGER#
+    WHERE Module_ID =#Module_ID:INTEGER# and data_time =#data_time:INTEGER#
   </update>
   
    <!-- 报警记录详情  -->
   <select id="alarmHistory_selectByPrimaryKey" resultMap="abatorgenerated_AlarmHistoryResult" parameterClass="map" >
-    SELECT  moduletype,module_code,alarm_content,alarm_time,report_way,status,ifnull(deal_time,0) deal_time,ifnull(deal_opid,0) deal_opid
+    SELECT  Module_Type_Id,Module_ID,Module_Desc,data_time,deal_time,finish_time,status,report_way,text,update_time,deal_opname
     FROM MAN_TH_ALARMHISTORY th
-    WHERE  th.module_code =#module_code:VARCHAR# and th.alarm_time =#alarm_time:INTEGER#
+    WHERE  th.Module_ID =#Module_ID:INTEGER# and th.data_time =#data_time:INTEGER#
   </select>
   
   
   <!-- 按记录条件查询报警记录 -->
   <select id="alarmHistory_queryListSelect" resultClass="com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory" parameterClass="map">
-  	SELECT moduletype,module_code,alarm_content,alarm_time,report_way,status,ifnull(deal_time,0) deal_time,ifnull(deal_opid,0) deal_opid
+  	SELECT Module_Type_Id,Module_ID,Module_Desc,data_time,deal_time,finish_time,status,report_way,text,update_time,deal_opname
     FROM MAN_TH_ALARMHISTORY th
-    WHERE  th.alarm_time between #startTime:INTEGER# and  #endTime:INTEGER# 
-    <isNotEmpty prepend="and" property="deal_opid"> th.deal_opid=#deal_opid:INTEGER#</isNotEmpty>
-    <isNotEmpty prepend="and" property="moduletype"> th.moduletype=#moduletype:VARCHAR#</isNotEmpty>
-    <isNotEmpty prepend="and" property="module_code"> th.module_code=#module_code:VARCHAR#</isNotEmpty>
+    WHERE  th.update_time between #starttime:INTEGER# and  #endtime:INTEGER# 
+    <isNotEmpty prepend="and" property="module_type_id"> th.Module_Type_Id=#module_type_id:INTEGER#</isNotEmpty>
+    <isNotEmpty prepend="and" property="module_id"> th.Module_ID=#module_id:INTEGER#</isNotEmpty>
     <isNotEmpty prepend="and" property="status"> th.status=#status:INTEGER#</isNotEmpty>
     <isNotEmpty prepend="and" property="report_way"> th.report_way=#report_way:INTEGER#</isNotEmpty>
-     limit 500 offset 0 
+    order by th.data_time DESC 
   </select>
   
   <!-- 按条件统计报警总数 -->
   <select id="alarmHistory_statisListSelect" resultClass="java.util.HashMap" parameterClass="map">
-  	SELECT module_code,count(1) total,count(deal_opid) deal_count
+  	SELECT Module_ID,count(1) total,count(deal_opname) deal_count
     FROM MAN_TH_ALARMHISTORY th
-    WHERE   th.alarm_time between #startTime:INTEGER# and  #endTime:INTEGER#
-    <isNotEmpty prepend="and" property="deal_opid">th.deal_opid=#deal_opid:INTEGER#</isNotEmpty>
-    <isNotEmpty prepend="and" property="moduletype"> th.moduletype=#moduletype:VARCHAR#</isNotEmpty>
-    group by module_code
+    WHERE   th.data_time between #startTime:INTEGER# and  #endTime:INTEGER#
+    <isNotEmpty prepend="and" property="deal_opname">th.deal_opname=#deal_opname:VARCHAR#</isNotEmpty>
+    <isNotEmpty prepend="and" property="Module_Type_Id"> th.Module_Type_Id=#Module_Type_Id:INTEGER#</isNotEmpty>
+    group by Module_ID
     
   </select>
   

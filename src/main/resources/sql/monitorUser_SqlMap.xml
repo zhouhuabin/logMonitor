@@ -38,6 +38,7 @@
       real_name = #real_name:VARCHAR#,
       role_id = #role_id:VARCHAR#,
       update_time = #update_time:DECIMAL#,
+      password = #password:VARCHAR#,
       mobile= #mobile:VARCHAR# 
     WHERE op_id = #op_id:DECIMAL#
   </update>

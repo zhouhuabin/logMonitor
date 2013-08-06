@@ -2,38 +2,23 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
-
-
+	<bean id="DaoTool" scope="singleton" 
+		class="com.palmcity.rtti.maintenancemonitor.service.DaoTool">
+		<property name="monitorUserDao" ref="monitorUserDaoImpl"></property>
+		<property name="moduleInfoDao" ref="moduleInfoDaoImpl"></property>
+		<property name="moduleTypeDao" ref="moduleTypeDaoImpl"></property>
+		<!-- property name="alarm_TicketDao" ref="alarm_TicketDaoImpl"></property -->
+		<property name="alarmHistoryDao" ref="alarmHistoryDaoImpl"></property>
+		<!--property name="logFileConfigureDao" ref="logFileConfigureImpl"></property -->
+		<property name="monitorMapDao" ref="monitorMapDaoImpl"></property>
+	</bean>
 	<!-- 运维监控配置类 -->
 	<bean id="monitorConfigure"
 		class="com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorConfigure">
-		<property name="monitorUserDao" ref="monitorUserDaoImpl"></property>
 		<property name="scan_interval" value="${scan_interval}"></property>
 		<property name="mail_receivers" value="${mail_receivers}" />
 		<property name="sms_receivers" value="${sms_receivers}"></property>
 		<property name="outputData_filepath" value="${PUBLISHDATA_FILEPATH}"></property>
-		<property name="moduleNameMap">
-			<map>
-				<entry key="${MODULETYPE_RECEIVE}" value="接收"></entry>
-				
-			</map>
-		</property>
-		<property name="confMap">
-			<map>
-				<entry key="${MODULETYPE_RECEIVE}">
-					<bean class="com.palmcity.rtti.maintenancemonitor.bean.LogTypeConfigure">
-						<property name="processClass"
-							value="com.palmcity.rtti.maintenancemonitor.service.ImplReceiveLogFileScan"></property>
-						<property name="threadNum" value="1"></property>
-						
-						<property name="fileList">
-							<list>
-							</list>
-						</property>
-					</bean>
-				</entry>
-			</map>
-		</property>
 	</bean>
 	<!-- 定时日志扫描线程类 -->
 	<bean id="logFileScanThread"
@@ -43,14 +28,12 @@
 		<property name="alarmDao" ref="alarmHistoryDaoImpl"></property>
 		<property name="messageService" ref="smsSender"></property>
 		<property name="mailService" ref="mailSender"></property>
-		<property name="logFileConfigureDAO" ref="logFileConfigureDAOImpl"></property>
+		<property name="jsurl" value="${JSURL}"></property>
+		<property name="receiveMobile" value="${sms_receivers}"></property>
+		<property name="receiveEmail" value="${mail_receivers}"></property>
 	</bean>
 
-    <!-- 模块管理持久化访问 -->
-	<bean id="logFileConfigureDAOImpl"
-		class="com.palmcity.rtti.maintenancemonitor.dao.impl.LogFileConfigureDAOImpl">
-		<property name="businessDAO" ref="baseDAO"></property>
-	</bean>
+    
 		<!-- 拓扑图管理持久化访问 -->
 	<bean id="monitorMapDaoImpl"
 		class="com.palmcity.rtti.maintenancemonitor.dao.impl.MonitorMapDAOImpl">
@@ -71,6 +54,16 @@
 		class="com.palmcity.rtti.maintenancemonitor.dao.impl.AlarmHistoryDAOImpl">
 		<property name="businessDAO" ref="baseDAO"></property>
 	</bean>
+	<!-- 模块类型列表持久化访问 -->
+	<bean id="moduleInfoDaoImpl"
+		class="com.palmcity.rtti.maintenancemonitor.dao.impl.ModuleInfoDAOImpl">
+		<property name="businessDAO" ref="baseDAO"></property>
+	</bean>
+	<!-- 模块列表持久化访问 -->
+	<bean id="moduleTypeDaoImpl"
+		class="com.palmcity.rtti.maintenancemonitor.dao.impl.ModuleTypeDAOImpl">
+		<property name="businessDAO" ref="baseDAO"></property>
+	</bean>
 
 	<!-- 用户管理服务实例 -->
 	<bean id="service.monitorUserService"
@@ -83,24 +76,12 @@
 		class="com.palmcity.rtti.maintenancemonitor.service.AlarmHistoryDaoService">
 		<property name="alarmHistoryDAO" ref="alarmHistoryDaoImpl"></property>
 	</bean>
-	<!-- 实时监测服务实现类 -->
-	<bean id="service.monitorRealTimeService"
-		class="com.palmcity.rtti.maintenancemonitor.service.MonitorRealTimeService">
-		<property name="configure" ref="monitorConfigure"></property>
-		<property name="logFileConfigureDAO" ref="logFileConfigureDAOImpl"></property>
-	</bean>
+	
 	<!-- 历史数据导出到excel表实现类 -->
 	<bean id="service.monitorReportExcel"
 		class="com.palmcity.rtti.maintenancemonitor.service.MonitorReportExcel">
 		<property name="alarmHistoryDAO" ref="alarmHistoryDaoImpl"></property>
 		<property name="configure" ref="monitorConfigure"></property>
-	</bean>
-	
-	<!-- 模块配置信息服务实现类 -->
-	<bean id="service.LogFileConfigureService"
-		class="com.palmcity.rtti.maintenancemonitor.service.LogFileConfigureService">
-		<property name="logFileConfigureDAO" ref="logFileConfigureDAOImpl"></property>
-		<property name="alarmHistoryDAO" ref="alarmHistoryDaoImpl"></property>
 	</bean>
 	<!-- 拓扑图配置信息服务实现类 -->
 	<bean id="service.MonitorMapDaoService"
@@ -112,6 +93,7 @@
 		class="com.palmcity.rtti.maintenancemonitor.service.MonitorAlarm_TicketService">
 		<property name="alarm_TicketDAO" ref="alarm_TicketDAOImpl"></property>
 		<property name="alarmHistoryDAO" ref="alarmHistoryDaoImpl"></property>
-		
 	</bean>
+	
+	
 </beans>
