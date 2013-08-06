@@ -16,9 +16,11 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.caits.lbs.bean.dbmodel.ETBase;
-import com.palmcity.rtti.maintenancemonitor.dao.impl.LogFileConfigureDAO;
+import com.palmcity.rtti.maintenancemonitor.dao.impl.ModuleInfoDAO;
+import com.palmcity.rtti.maintenancemonitor.dao.impl.ModuleTypeDAO;
 import com.palmcity.rtti.maintenancemonitor.dao.impl.MonitorUserDAO;
 import com.palmcity.rtti.maintenancemonitor.service.AbstractLogFileScan;
+import com.palmcity.rtti.maintenancemonitor.service.DaoTool;
 
 /**
  * <p>
@@ -62,8 +64,6 @@ public class MaintenanceMonitorConfigure extends ETBase {
 	private static final long serialVersionUID = 1L;
 	/** 日志记录器 */
 	public Logger log = Logger.getLogger(getClass());
-	/** 模块获取 */
-	private LogFileConfigureDAO logFileConfigureDAO;
 
 	/** 输出数据备份路径 */
 	private String outputData_filepath;
@@ -76,37 +76,10 @@ public class MaintenanceMonitorConfigure extends ETBase {
 	/** 短信接收人列表 */
 	private String sms_receivers="13900000001,13900000002,13900000003";
 
-	/**日志配置列表,key是moduleType */
-	private Map<String,LogTypeConfigure> confMap = new HashMap<String,LogTypeConfigure>();
-	
-	/** 日志类型名称映射表 */
-	private Map<String,String> moduleNameMap = new HashMap<String,String>();
 	
 	/**日志配置列表,key是moduleCode */
 	private Map<String,AbstractLogFileScan> codeConfMap = new HashMap<String,AbstractLogFileScan>();
 	
-	
-	/** 获取用户邮箱列表和短信列表 */
-	private MonitorUserDAO monitorUserDao;
-
-	/**
-	 * 字段 monitorUserDao 获取函数
-	 * @return the monitorUserDao : MonitorUserDAO
-	 */
-	public MonitorUserDAO getMonitorUserDao() {
-		return monitorUserDao;
-	}
-
-
-	/**
-	 * 字段 monitorUserDao 设置函数 : MonitorUserDAO
-	 * @param monitorUserDao the monitorUserDao to set
-	 */
-	public void setMonitorUserDao(MonitorUserDAO monitorUserDao) {
-		this.monitorUserDao = monitorUserDao;
-	}
-
-
 	/**
 	 * 获取变量<code>mail_receivers</code>的值
 	 * @return 返回的数据类型是<code>String</code>
@@ -142,25 +115,6 @@ public class MaintenanceMonitorConfigure extends ETBase {
 		this.sms_receivers =this.getMailOrSmsStr("sms_receivers");
 	}
 
-
-	/**
-	 * 获取变量<code>confMap</code>的值
-	 * @return 返回的数据类型是<code>Map<String,LogTypeConfigure></code>
-	 */
-	public Map<String, LogTypeConfigure> getConfMap() {
-		return confMap;
-	}
-
-
-	/**
-	 * 设置变量<code> confMap</code> 的值
-	 * @param confMap  <code>confMap</code> 参数类型是<code>Map<String,LogTypeConfigure></code>
-	 */
-	public void setConfMap(Map<String, LogTypeConfigure> confMap) {
-		this.confMap = confMap;
-	}
-
-
 	/**
 	 * 获取变量<code>scan_interval</code>的值
 	 * @return 返回的数据类型是<code>int</code>
@@ -177,26 +131,6 @@ public class MaintenanceMonitorConfigure extends ETBase {
 	public void setScan_interval(int scan_interval) {
 		this.scan_interval = scan_interval;
 	}
-
-
-	/**
-	 * 获取变量<code>moduleNameMap</code>的值
-	 * @return 返回的数据类型是<code>Map<String,String></code>
-	 */
-	public Map<String,String> getModuleNameMap() {
-		return moduleNameMap;
-	}
-
-
-	/**
-	 * 设置变量<code> moduleNameMap</code> 的值
-	 * @param moduleNameMap  <code>moduleNameMap</code> 参数类型是<code>Map<String,String></code>
-	 */
-	public void setModuleNameMap(Map<String,String> moduleNameMap) {
-		this.moduleNameMap = moduleNameMap;
-	}
-
-
 
 	/**
 	 * 设置文件扫描线程实例 
@@ -224,21 +158,6 @@ public class MaintenanceMonitorConfigure extends ETBase {
 	}
 	
 	/**
-	 * 字段 logFileConfigureDAO 获取函数
-	 * @return the logFileConfigureDAO : LogFileConfigureDAO
-	 */
-	public LogFileConfigureDAO getLogFileConfigureDAO() {
-		return logFileConfigureDAO;
-	}
-	/**
-	 * 字段 logFileConfigureDAO 设置函数 : LogFileConfigureDAO
-	 * @param logFileConfigureDAO the logFileConfigureDAO to set
-	 */
-	public void setLogFileConfigureDAO(LogFileConfigureDAO logFileConfigureDAO) {
-		this.logFileConfigureDAO = logFileConfigureDAO;
-	}
-	
-	/**
 	 * FIXME 
 	 * @param type
 	 * @return 系统用户登陆邮箱/手机号码列表
@@ -248,7 +167,7 @@ public class MaintenanceMonitorConfigure extends ETBase {
 		String str="";
 		List<MonitorUser> userList=null;
 		try {
-			userList = getMonitorUserDao().queryListByCondition(null);
+			userList =DaoTool.getMonitorUserDao().queryListByCondition(null);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -287,5 +206,4 @@ public class MaintenanceMonitorConfigure extends ETBase {
 	public String getOutputData_filepath() {
 		return outputData_filepath;
 	}
-
 }

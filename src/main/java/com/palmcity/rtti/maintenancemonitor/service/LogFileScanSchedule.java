@@ -8,23 +8,24 @@
 package com.palmcity.rtti.maintenancemonitor.service;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
+import com.caits.lbs.framework.log.CommonLogFactory;
 import com.caits.lbs.framework.services.jmx.JMXManager;
 import com.caits.lbs.framework.services.mail.IMailService;
 import com.caits.lbs.framework.services.sms.IMessageService;
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
-import com.palmcity.rtti.maintenancemonitor.bean.LogTypeConfigure;
+import com.palmcity.rtti.maintenancemonitor.api.ModuleData;
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorConfigure;
-import com.palmcity.rtti.maintenancemonitor.bean.MonitorUser;
+import com.palmcity.rtti.maintenancemonitor.bean.ModuleInfo;
+import com.palmcity.rtti.maintenancemonitor.bean.ModuleType;
 import com.palmcity.rtti.maintenancemonitor.dao.impl.AlarmHistoryDAO;
-import com.palmcity.rtti.maintenancemonitor.dao.impl.LogFileConfigureDAO;
-import com.palmcity.rtti.maintenancemonitor.dao.impl.MonitorUserDAO;
+import com.palmcity.rtti.maintenancemonitor.service.AbstractLogFileScan.LogFileScanThread;
 
 /**
  * <p>
@@ -68,44 +69,48 @@ public class LogFileScanSchedule extends Thread {
 	private int WRITE_INTERVAL = 30 * 1000;
 
 	/** 日志记录器 */
-	public Logger log = Logger.getLogger(getClass());
+	public static Logger log = CommonLogFactory.getLog();
 
 	/** 是否运行标志 */
 	private boolean bRun = true;
 
 	/** 配置类 */
-	private MaintenanceMonitorConfigure configure = null;
+	private static MaintenanceMonitorConfigure configure = null;
 
 	/** 报警记录数据访问接口 */
-	private AlarmHistoryDAO alarmDao;
+	private static AlarmHistoryDAO alarmDao;
 
 	/** 短信服务接口 */
-	private IMessageService messageService;
+	private static IMessageService messageService;
 	
 	/** 短信服务接口 */
-	private IMailService mailService;
+	private static IMailService mailService;
 	
-	private LogFileConfigureDAO logFileConfigureDAO;
-	
-
 	/** 正在运行的LogFileScan实例map */
-	static Map<String,AbstractLogFileScan> LogFileScanMap= new HashMap<String,AbstractLogFileScan>();
-	/**
-	 * 字段 logFileConfigureDAO 获取函数
-	 * @return the logFileConfigureDAO : LogFileConfigureDAO
-	 */
-	public LogFileConfigureDAO getLogFileConfigureDAO() {
-		return logFileConfigureDAO;
-	}
-
-	/**
-	 * 字段 logFileConfigureDAO 设置函数 : LogFileConfigureDAO
-	 * @param logFileConfigureDAO the logFileConfigureDAO to set
-	 */
-	public void setLogFileConfigureDAO(LogFileConfigureDAO logFileConfigureDAO) {
-		this.logFileConfigureDAO = logFileConfigureDAO;
-	}
-
+	static Map<Integer,AbstractLogFileScan> LogFileScanMap= new HashMap<Integer,AbstractLogFileScan>();
+	
+	
+	/** 模块map,key为模板ID，value为模板下的模块列表 */
+	static HashMap<Integer, ArrayList<ModuleInfo>> moduleInfoMapByTypeId=new HashMap<Integer, ArrayList<ModuleInfo>>();
+	
+	/** 模板map,key为模板ID,value为模板对象 */
+	static HashMap<Integer, ModuleType> moduleTypeMap=new HashMap<Integer, ModuleType>();
+	
+	/** 缓存各城市实时监测数据的map,key为城市名.数据体key为模块id,value为实时数据 */
+	static	ConcurrentHashMap <String, HashMap<Integer,ModuleData>> moduleDateMap=new ConcurrentHashMap <String, HashMap<Integer,ModuleData>>() ;
+	
+	
+	/** js文件地址 */
+	static String jsurl;
+	
+	
+	/** 短信，邮件收件人 */
+	static String receiveMobile;
+	static String receiveEmail;
+	
+	
+	/** 日志文件不存在报警map,key为模板ID,value为模板下找不到日志文件的各模块名称 */
+	static HashMap<Integer, String> logNotExistMap=new HashMap<Integer,String>();
 	/**
 	 * 构造器
 	 * 
@@ -121,55 +126,131 @@ public class LogFileScanSchedule extends Thread {
 	/**
 	 * 存储logFileScan
 	 */
-	public static  boolean addLogFileScan(String moduleType,AbstractLogFileScan logFileScan) {
-			LogFileScanMap.put(moduleType, logFileScan);
+	public static  boolean addLogFileScan(int moduleTypeId,AbstractLogFileScan logFileScan) {
+			LogFileScanMap.put(moduleTypeId, logFileScan);
 			return true;
 	}
 	/**
 	 * FIXME 
 	 */
 	@SuppressWarnings("unchecked")
-	public void init() {
+	public static void init() {
 		log.debug("任务线程开始扫描日志文件");
-
-		for (Entry<String, LogTypeConfigure> entry : configure
-				.getConfMap().entrySet()) {
-			String moduleType = entry.getKey();
-			String className = entry.getValue().getProcessClass();
-			int threadNum = entry.getValue().getThreadNum();
-			Class<AbstractLogFileScan> classScan = null;
-			try {
-				classScan = (Class<AbstractLogFileScan>) Class
-						.forName(className);
-			} catch (ClassNotFoundException e1) {
-				log.error("构造日志处理线程异常", e1);
-				continue;
-			}
-			List<LogFileConfigure> confList = null;
-			try {
-				confList = getLogFileConfigureDAO().getFileListByModuleType(moduleType);
-				entry.getValue().setFileList(confList);
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				log.error("构造模块列表异常", e1);
-			}
-			AbstractLogFileScan scan = null;
-			try {
-				scan = classScan.newInstance();
-				scan.setSchedule(this);
-				LogFileScanMap.put(moduleType, scan);
-				scan.init(moduleType, threadNum, confList,configure.getScan_interval(),entry.getValue());
-				JMXManager.getInstance().addObject(scan);
-			} catch (InstantiationException e) {
-				log.error("构造日志处理线程异常", e);
-			} catch (IllegalAccessException e) {
-				log.error("构造日志处理线程异常", e);
-			}
-
+		setModuleTypeMap();
+		setModuleInfoMap();
+		for(int moduleTypeId:moduleTypeMap.keySet())
+		{
+			AbstractLogFileScan scan = new ImplLogFileScan();
+			LogFileScanMap.put(moduleTypeId, scan);
+			if(moduleInfoMapByTypeId.containsKey(moduleTypeId)&&moduleInfoMapByTypeId.get(moduleTypeId).size()>0)
+				scan.init(moduleTypeMap.get(moduleTypeId), moduleInfoMapByTypeId.get(moduleTypeId),moduleTypeMap.get(moduleTypeId).getThreadInterval());
+			JMXManager.getInstance().addObject(scan);
 		}
 		log.debug("扫描日志线程启动完毕");
 	}
+	
+	public static void init(int moduleTypeId) {
+		log.debug(String.format("%d任务线程开始扫描日志文件", moduleTypeId));
+		setModuleTypeMap();
+		setModuleInfoMap();
+		AbstractLogFileScan scan = new ImplLogFileScan();
+		LogFileScanMap.put(moduleTypeId, scan);
+		if(moduleInfoMapByTypeId.containsKey(moduleTypeId)&&moduleInfoMapByTypeId.get(moduleTypeId).size()>0)
+			scan.init(moduleTypeMap.get(moduleTypeId), moduleInfoMapByTypeId.get(moduleTypeId),moduleTypeMap.get(moduleTypeId).getThreadInterval());
+		JMXManager.getInstance().addObject(scan);
+		log.debug(String.format("%d扫描日志线程启动完毕", moduleTypeId));
+	}
+	
+	/**
+	 * 取得各个类别的模块列表
+	 * @return
+	 */
+	public static void setModuleTypeMap()
+	{
+		try {
+			List<ModuleType> moduleTypeList=DaoTool.getModuleTypeDao().queryModuleTypeList(null);			
+			//如果是更新缓存
+			if(!moduleTypeMap.isEmpty())
+			{
+				moduleTypeMap.clear();
+			}
+			for(int i=0;i<moduleTypeList.size();i++)
+			{
+				moduleTypeMap.put(moduleTypeList.get(i).getModule_Type_Id(), moduleTypeList.get(i));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * 取得各个类别的模块列表
+	 * @return
+	 */
+	public static void setModuleInfoMap()
+	{
+		try {
+			List<ModuleInfo> moduleInfoList=DaoTool.getModuleInfoDao().queryModuleInfoList(null);
+				moduleInfoMapByTypeId.clear();
+			for(int i=0;i<moduleInfoList.size();i++)
+			{
+				int modeleTypeId=moduleInfoList.get(i).getModule_Type_Id();
+				if(moduleInfoMapByTypeId.get(modeleTypeId)==null)
+				{
+					ArrayList<ModuleInfo> ModuleInfolist=new ArrayList<ModuleInfo>();
+					moduleInfoMapByTypeId.put(modeleTypeId, ModuleInfolist);
+				}
+				moduleInfoMapByTypeId.get(modeleTypeId).add(moduleInfoList.get(i));
+				
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
+	/**
+	 * 关闭现有线程并且重新启动所有线程 
+	 */
+	public static void restartScanThread()
+	{
+		for(int moduleTypeId:LogFileScanMap.keySet())
+		{
+			ArrayList<LogFileScanThread> threadList=LogFileScanMap.get(moduleTypeId).getThreadlist();
+			for(int i=0;i<threadList.size();i++)
+			{
+				try {
+					threadList.get(i).setbRun(false);
+					threadList.get(i).interrupt();
+				} catch (Exception e) {
+					log.error("终端线程出错"+e.getLocalizedMessage());
+				}
+			}
+		}
+		LogFileScanSchedule.moduleDateMap.clear();
+		LogFileScanSchedule.init();
+	}
+	
+	
+	/**
+	 * 重新启动指定ID的线程 
+	 * @param moduleTypeId
+	 */
+	public static void restartScanThread(int moduleTypeId)
+	{
+		ArrayList<LogFileScanThread> threadList=LogFileScanMap.get(moduleTypeId).getThreadlist();
+		for(int i=0;i<threadList.size();i++)
+		{
+			try {
+				threadList.get(i).setbRun(false);
+				threadList.get(i).interrupt();
+			} catch (Exception e) {
+				log.error("终端线程出错"+e.getLocalizedMessage());
+			}
+		}
+		LogFileScanSchedule.moduleDateMap.clear();
+		LogFileScanSchedule.init(moduleTypeId);
+	}
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -214,7 +295,7 @@ public class LogFileScanSchedule extends Thread {
 	 * 获取变量<code>alarmDao</code>的值
 	 * @return 返回的数据类型是<code>AlarmHistoryDAO</code>
 	 */
-	public AlarmHistoryDAO getAlarmDao() {
+	public static AlarmHistoryDAO getAlarmDao() {
 		return alarmDao;
 	}
 
@@ -230,7 +311,7 @@ public class LogFileScanSchedule extends Thread {
 	 * 获取变量<code>messageService</code>的值
 	 * @return 返回的数据类型是<code>IMessageService</code>
 	 */
-	public IMessageService getMessageService() {
+	public static IMessageService getMessageService() {
 		return messageService;
 	}
 
@@ -247,7 +328,7 @@ public class LogFileScanSchedule extends Thread {
 	 * 获取变量<code>mailService</code>的值
 	 * @return 返回的数据类型是<code>IMailService</code>
 	 */
-	public IMailService getMailService() {
+	public static IMailService getMailService() {
 		return mailService;
 	}
 
@@ -269,4 +350,63 @@ public class LogFileScanSchedule extends Thread {
 	
 	}
 
+	/**
+	 * 获取变量<code>receiveMobile</code>的值
+	 * @return 返回的数据类型是<code>String</code>
+	 */
+	public String getReceiveMobile() {
+		return receiveMobile;
+	}
+
+
+
+	/**
+	 * 设置变量<code> receiveMobile</code> 的值
+	 * @param receiveMobile  <code>receiveMobile</code> 参数类型是<code>String</code>
+	 */
+	public void setReceiveMobile(String receiveMobile) {
+		LogFileScanSchedule.receiveMobile = receiveMobile;
+	}
+
+
+
+	/**
+	 * 获取变量<code>receiveEmail</code>的值
+	 * @return 返回的数据类型是<code>String</code>
+	 */
+	public String getReceiveEmail() {
+		return receiveEmail;
+	}
+
+
+
+	/**
+	 * 设置变量<code> receiveEmail</code> 的值
+	 * @param receiveEmail  <code>receiveEmail</code> 参数类型是<code>String</code>
+	 */
+	public void setReceiveEmail(String receiveEmail) {
+		LogFileScanSchedule.receiveEmail = receiveEmail;
+	}
+
+
+
+	/**
+	 * 获取变量<code>jsurl</code>的值
+	 * @return 返回的数据类型是<code>String</code>
+	 */
+	public  String getJsurl() {
+		return jsurl;
+	}
+
+
+
+	/**
+	 * 设置变量<code> jsurl</code> 的值
+	 * @param jsurl  <code>jsurl</code> 参数类型是<code>String</code>
+	 */
+	public void setJsurl(String jsurl) {
+		LogFileScanSchedule.jsurl = jsurl;
+	}
+
+	
 }

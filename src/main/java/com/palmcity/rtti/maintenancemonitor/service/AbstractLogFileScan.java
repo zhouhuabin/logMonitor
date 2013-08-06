@@ -8,6 +8,8 @@
 package com.palmcity.rtti.maintenancemonitor.service;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,14 +17,24 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Vector;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import org.apache.log4j.Logger;
+import org.quartz.jobs.ee.mail.SendMailJob;
 import org.springframework.util.Assert;
 
 import com.caits.lbs.framework.Constants;
@@ -33,12 +45,13 @@ import com.caits.lbs.framework.utils.Base64Codec;
 import com.caits.lbs.framework.utils.GlobalTime;
 import com.caits.lbs.framework.utils.StringUtils;
 import com.caits.lbs.framework.utils.SystemHelper;
+import com.caits.lbs.framework.utils.TimeTools;
 import com.common.ajax.server.SessionMap;
-import com.palmcity.rtti.maintenancemonitor.api.MonitorLogData;
+import com.palmcity.rtti.maintenancemonitor.api.ModuleData;
 import com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory;
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
-import com.palmcity.rtti.maintenancemonitor.bean.LogTypeConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorException;
+import com.palmcity.rtti.maintenancemonitor.bean.ModuleInfo;
+import com.palmcity.rtti.maintenancemonitor.bean.ModuleType;
 import com.palmcity.rtti.maintenancemonitor.bean.MonitorUser;
 
 /**
@@ -87,74 +100,98 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 
 	/** 日志记录器 */
 	Logger log = CommonLogFactory.getLog();
-
+	/** 日志记录器 */
+	Logger errolog = CommonLogFactory.getErrdatalog();
+	/** 日志模板 */
+	private	ModuleType moduleType;
 	/** 日志配置列表 */
-	private List<LogFileConfigure> confList;
+	private List<ModuleInfo> moduleInfoList;
 
-	/** 模块类型 */
-	private String moduleType;
-
-	/** 错误类型计数器 */
-	protected ErrorTimes errorTimes = new ErrorTimes();
-
-	/** 记录每个moduleCode的索引位置 */
-	private Map<String, Integer> indexMap = new HashMap<String, Integer>();
-
-	/** 日志类型配置类 */
-	private LogTypeConfigure logTypeConfigure;
-
-	/** 调度类对象，以获取其他服务对象 */
-	private LogFileScanSchedule schedule;
+	/** 错误计数器 */
+	protected ErrorValues errorValues = new ErrorValues();
 
 	/** 短信消息体 */
-	private MessageSMS message = new MessageSMS();
+	private MessageSMS messages = new MessageSMS();
 
-	private AbstractLogFileScan  abstractLogFileScan;
-	
 	public static  Vector<MessageSMS> messageVector=new Vector<MessageSMS>();
 	
+	private ArrayList<LogFileScanThread> Threadlist = new ArrayList<LogFileScanThread>();
+	
+	/** 当模块数大于这个数字时会启动多线程 */
+	private int THREAD_MODULE=10;
+	
+	/*//调用js组件
+		private ScriptEngineManager mgr = new ScriptEngineManager();
+		private ScriptEngine engine = mgr.getEngineByName("JavaScript");
+		private Invocable inv=null;*/
+	
+	/** 模板字段map */
+	private HashMap<String, String> ModuleTypeFieldMap=new HashMap<String,String>();
+	
+	/** 模板统计字段map */
+	private HashMap<String, String> staticMap=new HashMap<String,String>();
+	
+	private SimpleDateFormat dateformat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	
+	
+	
+	static SimpleDateFormat formatDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	/**
 	 * 构造器
 	 */
 	public AbstractLogFileScan() {
-	}
-
-	/**
-	 * 构造器
-	 * 
-	 * @param conf_process
-	 */
-	public AbstractLogFileScan(List<LogFileConfigure> cfList) {
-		setConfList(cfList);
-
+		
 	}
 
 	/**
 	 * 日志文件扫描线程初始化方法
 	 * 
-	 * @param moduleType
+	 * @param moduleTypeId
 	 * @param threaNum
 	 * @param confList
 	 * @param scan_interval
 	 * @param logTypeConfigure
 	 */
-	public void init(String moduleType, int threaNum,
-			List<LogFileConfigure> confList, int scan_interval,
-			LogTypeConfigure logTypeConfigure) {
+	public void init(ModuleType moduleType,
+			List<ModuleInfo> ModuleInfoList, int scan_interval) {
 		setModuleType(moduleType);
-		setLogTypeConfigure(logTypeConfigure);
-		setConfList(confList);
+		setModuleInfoList(ModuleInfoList);
+		setModuleTypeFieldMap(moduleType,ModuleTypeFieldMap);
+		setStaticMap(moduleType,staticMap);
+		
 		WRITE_INTERVAL = scan_interval;
-		log.debug("开始启动日志扫描线程,moduleType=" + moduleType);
-
+		log.info("开始启动日志扫描线程,moduleType=" + moduleType.getModule_Type_Name());
+		//当模块数大于10个时启动多线程，线程数为CPU核数
+		int threaNum=1;
+		if(ModuleInfoList.size()>=THREAD_MODULE*2)
+		  threaNum=2;
+		if(ModuleInfoList.size()>=THREAD_MODULE*3) 
+		  threaNum=3;
+		int MaxModuleInfoSize=ModuleInfoList.size()/threaNum;
 		for (int i = 0; i < threaNum; i++) 
 		{
-			LogFileScanThread thread = new LogFileScanThread(i);
+			 //调用js组件
+			 ScriptEngineManager mgr = new ScriptEngineManager();
+			 ScriptEngine engine = mgr.getEngineByName("JavaScript");
+			 Invocable inv=null;
+			 try {
+					engine.eval(new FileReader(LogFileScanSchedule.jsurl));
+					inv = (Invocable) engine;
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ScriptException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			LogFileScanThread thread = new LogFileScanThread(moduleType.getModule_Type_Name()+i);
+			thread.setInv(inv);
+			List<ModuleInfo> moduleList=ModuleInfoList.subList(i*MaxModuleInfoSize, i==threaNum-1?ModuleInfoList.size():MaxModuleInfoSize*(i+1));
+			thread.setModuleList(moduleList);
 			thread.start();
+			Threadlist.add(thread);
 		}
-
-		log.debug("启动日志扫描线程结束,moduleType=" + moduleType);
-
+		log.info(String.format("启动日志扫描线程结束,moduleType=%s，共启用了%d个线程", moduleType.getModule_Type_Name(),Threadlist.size()));
 	}
 
 	
@@ -164,392 +201,353 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 	 *
 	 */
 	@Override
-	public void scanFile(URL url, String moduleType, LogFileConfigure conf)
+	public void scanFile(URL url,ModuleInfo info,Invocable inv)
 			throws MaintenanceMonitorException {
 		try {
 //			UrlResource resource = new UrlResource(url);
 			URLConnection  urlCon = url.openConnection();
 			urlCon.setConnectTimeout(3000);
 			InputStream is = urlCon.getInputStream();
+			if(info.getModule_ID()==19)
+				log.info("进入调试模式");
 			/**判断日志文件的最后修改时间**/
-			if (urlCon.getContentLength() != conf.getContentLength()) {
+			if (urlCon.getContentLength() != info.getContentLength()) {
 				log.info(String.format("模块%s日志文件%s有更新，time=%d",
-						conf.getModuleDesc(), url,urlCon.getLastModified()/1000));
-				conf.setContentLength(urlCon.getContentLength());
+						info.getModule_Desc(), url,urlCon.getLastModified()/1000));
+				info.setContentLength(urlCon.getContentLength());
+				
 				BufferedReader br = new BufferedReader(new InputStreamReader(
-						is, conf.getEncoding()));
+						is, info.getEncoding()));
+				
+				Scanner sc=new Scanner(br);
 				String line = null;
-				while ((line = br.readLine()) != null) {
-					try {
-						parseLogLine(line, conf.getModuleType(), conf);
-					} catch (IllegalStateException e) {
-						log.error(String.format("模块%s非法的状态异常," + e.getLocalizedMessage(),conf.getModuleDesc()));
-					}
+				while((sc.hasNextLine()&&(line=sc.nextLine())!=null)){
+				    if(!sc.hasNextLine())
+				    	parseLogLine(line, info,inv);
 				}
+				
 				br.close();
 				is.close();
 			} else {
-				log.warn(String.format("模块%s日志文件%s无更新，直接跳过.",
-						conf.getModuleDesc(), url));
+				long now=System.currentTimeMillis()/1000;
+				log.warn(String.format("模块%s日志文件超过%d秒无更新，直接跳过.",info.getModule_Desc(), now-info.getLastDateTime()));
+				
+				if(info.getModule_ID()==19)
+					log.info("进入调试模式");
+				if(info.getLastDateTime()>0&&(now-info.getLastDateTime())>=info.getTimeValue())
+				{
+					String errro_msg=String.format("超过%d秒没有更新",(now-info.getLastDateTime()));
+					if(LogFileScanSchedule.moduleDateMap.containsKey(info.getCityName())&&LogFileScanSchedule.moduleDateMap.get(info.getCityName()).containsKey(info.getModule_ID()))
+					{
+						LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setStatus(ModuleData.ALARM_STATUS_ALARMING);
+						LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setText(errro_msg);
+						//发现未更新报警
+						if(errorValues.getValues(info.getModule_ID())<=info.getErrorValve())
+						{
+							errorValues.setValues(info.getModule_ID(), info.getErrorValve()+1);
+							sendMailSms(info,info.getModule_Desc()+errro_msg+",请速处理.");
+							ModuleData data=LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID());
+							writeAlarmDao(data,info,AlarmHistory.ALARM_REPORT_WAY_NOWARN);
+						}
+					}
+				}
 			}
-			/**selfCheck为设置文件1小时以上无更新报警**/
-			selfCheck(conf);
-		} catch (MalformedURLException e) {
+			/**selfCheck为设置文件1小时以上无更新报警
+			selfCheck(conf);*/
+		} catch (Exception e) {
 			/**监测到文件不存在报警，并且进行报警处理**/
-			String error_msg = String.format("模块%s日志url错误." , conf.getModuleDesc());
-			String ret_msg = dealErrorTimes(error_msg, conf.getModuleType(), conf);
-
-			throw new MaintenanceMonitorException(ret_msg, e);
-		} catch (IOException e) {
-			String error_msg = String.format("模块%s访问日志url出错.",conf.getModuleDesc());
-			String ret_msg = dealErrorTimes(error_msg, conf.getModuleType(), conf);
-			throw new MaintenanceMonitorException(ret_msg, e);
+			String error_msg = String.format("模块%s日志不存在." , info.getModule_Desc());
+			setLogNotExist(info);
+			//如果在此之前是运行正常的模块
+			if(LogFileScanSchedule.moduleDateMap.containsKey(info.getCityName())&&LogFileScanSchedule.moduleDateMap.get(info.getCityName()).containsKey(info.getModule_ID()))
+			{
+				LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setStatus(ModuleData.ALARM_STATUS_NOTREAD);
+				LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setText(error_msg);
+				//如果此前没有发过报警邮件
+				if(errorValues.getValues(info.getModule_ID())<=info.getErrorValve())
+				{
+					errorValues.setValues(info.getModule_ID(), info.getErrorValve()+1);
+					ModuleData data=LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID());
+					sendMailSms(info,info.getModule_Desc()+error_msg+",请速处理.");
+					writeAlarmDao(data,info,AlarmHistory.ALARM_REPORT_WAY_FILENOTEXISTS);
+				}
+			}
+			//String ret_msg = dealErrorTimes(error_msg, getModuleType().getModule_Type_Name(), info);
+			throw new MaintenanceMonitorException(error_msg, e);
 		}
 	}
 
-	/**
-	 * 读完模块的所有日志后检查最新的数据设置文件无更新报警
-	 * 
-	 * @param conf
-	 */
-	protected void selfCheck(LogFileConfigure conf) {
-		if(conf.selfCheck())
+
+	private void setLogNotExist(ModuleInfo info)
+	{
+		if(LogFileScanSchedule.logNotExistMap.containsKey(info.getModule_Type_Id()))
 		{
-			alarmAnalyse(conf.getLastObj(), conf);
+			if(!LogFileScanSchedule.logNotExistMap.get(info.getModule_Type_Id()).contains(info.getModule_Desc()))
+			{
+				LogFileScanSchedule.logNotExistMap.put(info.getModule_Type_Id(), LogFileScanSchedule.logNotExistMap.get(info.getModule_Type_Id())+info.getModule_Desc()+",");
+			}
+		}
+		else {
+			LogFileScanSchedule.logNotExistMap.put(info.getModule_Type_Id(),"");
 		}
 	}
-
-	/**
-	 * 发现文件不存在报警，进行处理，封装报警json进行处理
-	 * 
-	 * @param url
-	 * @param moduleType
-	 * @param conf
-	 * @return
-	 */
-	protected String dealErrorTimes(final String error_msg, String moduleType,
-			LogFileConfigure conf) {
-		// 处理错误次数
-		int times = errorTimes.getTimes(conf.getModuleCode()) + 1;
-		errorTimes.setTimes(conf.getModuleCode(), times);
-		String ret_msg = error_msg + ",次数" + times;
-		log.error(ret_msg);
-		/**文件不存在报警超过错误码(默认为3)次，进行报警处理**/
-		if (times > conf.getErroValue()) {
-			parseLogLine(buildErrorLog(ret_msg, conf.getModuleType(), conf), conf.getModuleType(),
-					conf);
-			errorTimes.setTimes(conf.getModuleCode(), 0);
-		}
-		return ret_msg;
-	}
-
-	/**
-	 * 监测到文件不存在报警，并且生成实体JSON字符串
-	 * 
-	 * @param error_msg
-	 * @param moduleType2
-	 * @param conf
-	 * @return
-	 */
-	protected String buildErrorLog(String error_msg, String moduleType,
-			LogFileConfigure conf) {
-		MonitorLogData data = new MonitorLogData();
-		data.setDateTime(GlobalTime.systemTimeUtc());
-		data.setModuleType(getModuleType());
-		data.setModuleCode(conf.getModuleCode());
-		data.setModuleDesc(conf.getModuleDesc());
-		data.setHot_x(conf.getHot_x());
-		data.setHot_y(conf.getHot_y());	
-		data.setMailAlarm(conf.getMailAlarm());
-		data.setErroValue(conf.getErroValue());
-		data.setEncoding(conf.getEncoding());
-		data.setCarCount_max(conf.getCarCount_max());
-		data.setRelationAlarm(conf.getRelationAlarm());
-		data.setMapCode(conf.getMapCode());
-		data.setUrl(conf.getUrl());
-		data.setAlarmCondition(conf.getAlarmCondition());
-		data.setLogType(MonitorLogData.LOGTYPE_WARN);
-		data.setAlarm_status(AlarmHistory.ALARM_STATUS_WARNNING);
-		data.setAlarm_report_way(AlarmHistory.ALARM_REPORT_WAY_FILENOTEXISTS);
-		data.setText(error_msg);
-		log.info(String.format("模块%s构造错误日志行%s",conf.getModuleDesc(),data.toJSONString()));
-		return data.toJSONString();
-	}
-
 	/**
 	 * 解析日志内容，并分析报警
 	 * 
 	 * @param line
 	 * @param moduleType
-	 * @param conf
+	 * @param info
 	 */
-	public void parseLogLine(String line, String moduleType,
-			LogFileConfigure conf) {
-		log.debug(String.format("模块%s开始处理日志行%s" ,conf.getModuleDesc(), line));
+	public void parseLogLine(String line,ModuleInfo info,Invocable inv) {
+		log.debug(String.format("模块%s开始处理日志行%s" ,info.getModule_Desc(), line));
 		org.springframework.util.Assert.state(StringUtils.notNullOrBlank(line),
-				String.format("模块%s日志行为空，直接跳过.url=%s" ,conf.getModuleDesc(), conf.getUrl()));
+				String.format("模块%s日志行为空，直接跳过.url=%s" ,info.getModule_Desc(), info.getUrl()));
 		// log.debug("JSONObject entry(key:value)=" + obj.toString());
-		MonitorLogData data = conf.buildBean(line);
-		/**按照datetime判断模块是否更新,更新返回true**/
-		if (conf.compareLastObj(data)) {
-			alarmAnalyse(data, conf);
-			/*if(conf.getLastObj().getAlarm_status()==1&&data.getAlarm_status()==1)
-			{
-				data.setAlarm_time((int)conf.getLastObj().getAlarm_time());
-			}*/
-			conf.setLastObj(setDataStatus(data, conf));
-		}
-	}
-
-	/**
-	 * 依据报警次数设置模块状态 ，并且发送短信、邮件
-	 * @param data
-	 * @param conf
-	 */
-	public MonitorLogData setDataStatus(MonitorLogData data,LogFileConfigure conf)
-	{
-		String key=conf.getModuleCode()+"errroCount";
-		if(data.getAlarm_report_way()==AlarmHistory.ALARM_REPORT_WAY_FILENOTEXISTS)
-		{
-			data.setAlarm_status(AlarmHistory.ALARM_STATUS_NOTREAD);
-			//如果上一条信息是报警，设置此次报警的时间为上一次报警的时间
-			if(conf.getLastObj().getAlarm_status()==AlarmHistory.ALARM_STATUS_WARNNING)
-			{
-				//data.setAlarm_time(conf.getLastObj().getAlarm_time());
-			}
-			else
-			{
-				//data.setAlarm_time(GlobalTime.systemTimeUtc());
-				//发现新报警并且发送邮件
-				/*sendAlarmByConf(data, conf);
-				writeAlarmDao(data);*/
-			}
-			data.setText(String.format("模块%s Log文件不存在" ,conf.getModuleDesc()));
-			log.info(String.format("模块%s文件不存在报警" ,conf.getModuleDesc()));
-			
-			/**根据配置发送短信和邮件报警**/
-			return data;
-		}
-		else
-		{
-			if(errorTimes.getTimes(key)>=conf.getErroValue())
-			{
-					
-					data.setAlarm_status(AlarmHistory.ALARM_STATUS_WARNNING);
-					//已经处理的故障状态设置
-					if(conf.getLastObj().getAlarm_status()==AlarmHistory.ALARM_STATUS_DEALING||(conf.getLastObj().getAlarm_status())==(AlarmHistory.ALARM_STATUS_ErrorAlarm))
-					{
-						data.setAlarm_status(conf.getLastObj().getAlarm_status());
-					}
-					else if(conf.getLastObj().getAlarm_status()==AlarmHistory.ALARM_STATUS_WARNNING)
-					{
-						data.setAlarm_time(conf.getLastObj().getAlarm_time());
-					}
-					else
-					{
-						data.setAlarm_time(GlobalTime.systemTimeUtc());
-						sendAlarmByConf(data, conf);
-						//发现新报警并且发送邮件
-					}
-					log.info(String.format("模块%s报警超过%s次" ,conf.getModuleDesc(),conf.getErroValue()));
-					/**根据配置发送短信和邮件报警**/
-					writeAlarmDao(data);
-			}
-			else if(errorTimes.getTimes(key)>=1&&errorTimes.getTimes(key)<conf.getErroValue())
-			{
-				data.setAlarm_status(AlarmHistory.ALARM_STATUS_Warning);
-				log.info(String.format("模块%s出现异常报警" ,conf.getModuleDesc()));
-			}
-			else
-			{
-				/**运行到此证明此模块是正常的**/
-				data.setAlarm_status(AlarmHistory.ALARM_STATUS_NOWARN);
-				/**如果此前有报警,则状态修改为恢复正常**/
-				if(conf.getLastObj().getAlarm_status()>0&&conf.getLastObj().getAlarm_status()==AlarmHistory.ALARM_STATUS_WARNNING)
-				{
-					data.setAlarm_status(AlarmHistory.ALARM_STATUS_FINISH);
-					finishAlarmByConf(data, conf);
-					log.info(String.format("模块%s恢复正常" ,conf.getModuleDesc()));
-				}
-				finishDealAlarm(conf);
-				errorTimes.setTimes(key, 0);
-			}
-			return data;
-		}
 		
-	}
-	
-	
-	/**
-	 * 分析日志是否有报警
-	 * 
-	 * @param logData
-	 *            单条数据
-	 * @param conf
-	 *            模块配置对象
-	 */
-	protected void alarmAnalyse(MonitorLogData logData, LogFileConfigure conf) {
-		Assert.notNull(logData,String.format("模块%s被分析的日志内容不能为空",conf.getModuleDesc()));
-		/**报警次数key**/
-		String key=conf.getModuleCode()+"errroCount";
-		/**模块已经发现的报警次数**/
-		int times = errorTimes.getTimes(key);
-		
-		/**日志无更新报警**/
-		long now=GlobalTime.systemTimeUtc();
-		long dateT=logData.getDateTime();
-		long duibi=Math.abs(dateT- now);
-		if (Math.abs(logData.getDateTime() - GlobalTime.systemTimeUtc()) > INVALID_DATATIME_THRESHOLD
-				&& logData.noAnalyseAlarm()) {
-			logData.setAlarm_report_way(AlarmHistory.ALARM_REPORT_WAY_LINENOTUPDATED);
-			errorTimes.setTimes(key, times+1);
-			logData.setText(String.format("模块%s日志内容是>1小时以前的，直接跳过." ,logData.getModuleDesc()));
-			log.warn(String.format("模块%s日志内容是>1小时以前的，直接跳过." ,logData.getModuleDesc()));
-			return;
+		if(info.getModule_Desc().equals("北京接收"))
+		{
+			log.info("调试模式");
 		}
-		// 2.日志内容报警
-		if (logData.checkContentAlarm()) {
-			// 如果无报警则设置报警
-				errorTimes.setTimes(key, times+1);
-				logData.setText(logData.getText());
-				/**过滤日志URL报警**/
-				if(logData.getAlarm_report_way()!=AlarmHistory.ALARM_REPORT_WAY_FILENOTEXISTS)
-				{
-					logData.setAlarm_report_way(AlarmHistory.ALARM_REPORT_WAY_LOGLINEALARM);
-				}
-				log.info(String.format("模块%s有内容报警%s", logData.getModuleDesc(),
-						logData.getText()));
-			return;
-		}
-		// 3.软分析后报警
 		try {
-			if (logData.checkConditionAlarm()) {
-				if (logData.getAlarm_status() <= AlarmHistory.ALARM_STATUS_NOWARN) {
-					errorTimes.setTimes(key, times+1);
-					logData.setText(logData.getText()+String.format(" 模块%s软分析报警",
-							logData.getModuleDesc()));
-					logData.setAlarm_report_way(AlarmHistory.ALARM_REPORT_WAY_LINEANALYSEALARM);
-					log.info(String.format("模块%s软分析报警,条件为%s",
-							logData.getModuleDesc(), Base64Codec.decode(conf.getAlarmCondition())));
+			long dateTime = Math.round((Double) inv.invokeFunction("getProInfo", line, "dateTime"));
+			if(dateTime>info.getLastDateTime())
+			{
+				if(!LogFileScanSchedule.moduleDateMap.containsKey(info.getCityName()))
+					LogFileScanSchedule.moduleDateMap.put(info.getCityName(), new HashMap<Integer,ModuleData>());
+				if(!LogFileScanSchedule.moduleDateMap.get(info.getCityName()).containsKey(info.getModule_ID()))
+					LogFileScanSchedule.moduleDateMap.get(info.getCityName()).put(info.getModule_ID(), new ModuleData());
+				
+				Object StaticInfo = (Object) inv.invokeFunction("StaticInfo", line,getStaticStr(staticMap));
+				Object AnalyInfo = (Object) inv.invokeFunction("SoftAnalysis", line, getSoftAnalysis(Base64Codec.decode(info.getAlarmCondition()),ModuleTypeFieldMap));
+				Double logType = (Double) inv.invokeFunction("getProInfo", line, "logType");
+				Object text = (Object) inv.invokeFunction("getProInfo", line, "text");
+				
+				//正常
+				ModuleData data=new ModuleData();
+				data.setStatus(ModuleData.ALARM_STATUS_NOWARN);
+				data.setStsticInfo(StaticInfo.toString());
+				data.setText((AnalyInfo.toString().equals("")?text+"":AnalyInfo).toString());
+				data.setModuleName(info.getModule_Desc());
+				data.setDateTime(dateformat.format(TimeTools.utc2date(dateTime)));
+				
+				//软分析报警
+				if(!AnalyInfo.equals(""))
+				{
+					errorValues.addValues(info.getModule_ID());
+					data.setStatus(ModuleData.ALARM_STATUS_WARNNING);
 				}
-				return;
+				//日志报警
+				if(errorValues.getValues(info.getModule_ID())==info.getErrorValve()||logType==2)
+				{
+					data.setStatus(ModuleData.ALARM_STATUS_ALARMING);
+					if(logType==2)
+					{
+						
+						//发送报警邮件和短信
+						data.setText("程序运行异常报警logType==2");
+						sendMailSms(info,data.getModuleName()+data.getText()+",请速处理.");
+						//写入历史报警数据库
+						writeAlarmDao(data,info,AlarmHistory.ALARM_REPORT_WAY_LOGLINEALARM);
+					}
+					else if(errorValues.getValues(info.getModule_ID())==info.getErrorValve())
+					{
+						if(!data.getText().equals("程序运行异常报警logType==2"))
+							data.setText(String.format("异常次数超过%d次", info.getErrorValve()));
+						errorValues.addValues(info.getModule_ID());
+						writeAlarmDao(data,info,AlarmHistory.ALARM_REPORT_WAY_LINEANALYSEALARM);
+						sendMailSms(info,data.getModuleName()+data.getText()+",请速处理.");
+					}
+					
+				}
+				if(data.getStatus().equals(ModuleData.ALARM_STATUS_NOWARN)&&errorValues.getValues(info.getModule_ID())>=info.getErrorValve())
+				{
+					errorValues.setValues(info.getModule_ID(), 0);
+					sendMailSms(info,data.getModuleName()+"恢复正常");
+				}
+				setLastData(info,data);
+				info.setLastDateTime(dateTime);
+				data=null;
 			}
-			errorTimes.setTimes(key, 0);			
-		} catch (MaintenanceMonitorException e) {
-			log.error(String.format("模块%s软报警分析错误%s" ,conf.getModuleDesc(), e.getLocalizedMessage()), e);
-		}catch (Exception e){
-			log.error(String.format("模块%s软报警分析错误%s" ,conf.getModuleDesc(), e.getLocalizedMessage()), e);
-		}
-	}
-	/**
-	 * 根据配置发送报警短信和报警邮件
-	 * 
-	 * @param logData
-	 * @param conf
-	 */
-	protected void sendAlarmByConf(MonitorLogData logData, LogFileConfigure conf) {
-		String receiveMobile=getSchedule().getConfigure().getSms_receivers();
-		String receiveEmail=getSchedule().getConfigure().getMail_receivers();
-		if (conf.getSmsAlarm() > 0) {
-			message.setHead(receiveMobile);
-			message.setBody(conf.getModuleDesc() + logData.getText()
-					+ ",请速处理.");
-			try
-			{
-				getSchedule().getMessageService().sendMessage(message);
-				log.info(String.format("模块%s发现报警:%s,发送报警短信成功.",
-						conf.getModuleDesc(), logData.getText()));
-			}
-			catch(Exception e)
-			{
-				MessageSMS sms=new MessageSMS();
-				sms.setHead(receiveMobile);
-				sms.setBody(conf.getModuleDesc() + logData.getText()
-					+ ",请速处理.");
-				messageVector.add(sms);
-				log.error(String.format("模块%s发现报警:%s,发送报警短信时失败.",
-						conf.getModuleDesc(), logData.getText()));
-			}
-		}
-		if (conf.getMailAlarm() > 0) {
-			try
-			{
-				getSchedule().getMailService().sendTextMail(receiveEmail,
-						conf.getModuleDesc(),
-						conf.getModuleDesc() + logData.getText() + ",请速处理.");
-				
-				log.info(String.format("模块%s发现报警:%s,发送报警邮件成功.",
-						conf.getModuleDesc(), logData.getText()));
-			}
-			catch(Exception e)
-			{
-				log.error(String.format("模块%s发现报警:%s,发送报警邮件失败.",
-						conf.getModuleDesc(), logData.getText()));
-			}
-		}
-		
-	}
-
-	/**
-	 * 模块恢复时发送短信通知 
-	 * @param logData
-	 * @param conf
-	 */
-	protected void finishAlarmByConf(MonitorLogData logData, LogFileConfigure conf) {
-		if (conf.getSmsAlarm() > 0) {
-			// 短信发送
-			message.setHead(getSchedule().getConfigure().getSms_receivers());
-			message.setBody(conf.getModuleDesc() + " 已恢复正常,"
-					+ ",特此通知.");
-			getSchedule().getMessageService().sendMessage(message);
 			
-			try
-			{
-				getSchedule().getMessageService().sendMessage(message);
-				
-			}
-			catch(Exception e)
-			{
-				MessageSMS sms=new MessageSMS();
-				sms.setHead(getSchedule().getConfigure().getSms_receivers());
-				sms.setBody(conf.getModuleDesc() + " 已恢复正常,"
-						+ ",特此通知.");
-				messageVector.add(sms);
-				log.error(String.format("模块%s发现报警:%s,发送报警短信时失败.",
-						conf.getModuleDesc(), logData.getText()));
-			}
+		} catch (ScriptException e) {
+			// TODO Auto-generated catch block
+			errolog.info(String.format("执行js脚本过程中错误%S", e.getLocalizedMessage()));
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			errolog.info(String.format("执行js脚本过程中错误%S", e.getLocalizedMessage()));
 		}
-		if (conf.getMailAlarm() > 0) {
-			try
-			{
-				getSchedule().getMailService().sendTextMail(
-						getSchedule().getConfigure().getMail_receivers(),
-						conf.getModuleDesc(),
-						conf.getModuleDesc() +  " 已恢复正常," + ",特此通知.");
+		 catch (Exception e) {
+				// TODO Auto-generated catch block
+				errolog.info(String.format("出现异常错误%S", e.getLocalizedMessage()));
 			}
-			catch(Exception e)
-			{
-				log.error(String.format("模块%s发现报警:%s,发送报警邮件失败.",
-						conf.getModuleDesc(), logData.getText()));
-			}
-		}
-		log.info(String.format("模块%s恢复正常:%s,发送恢复短信和邮件.",
-				conf.getModuleDesc(), logData.getText()));
 	}
+	public void setLastData(ModuleInfo info,ModuleData data)
+	{
+		LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setStatus(data.getStatus());
+		LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setStsticInfo(data.getStsticInfo());
+		LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setText(data.getText());
+		LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setModuleName(data.getModuleName());			
+		LogFileScanSchedule.moduleDateMap.get(info.getCityName()).get(info.getModule_ID()).setDateTime(data.getDateTime());
+	}
+	/**
+     * 软分析报警表达式，多个表达式中间以;间隔 
+     * @param SoftStr
+     * return js表达式
+     * 
+     */
+    public static String getSoftAnalysis(String SoftStr,HashMap<String, String> FiledMap)
+    {
+    	String Analysis="";
+    	String[] soft=SoftStr.split(";");
+    	for(int i=0;i<soft.length;i++)
+    	{
+    		if(soft[i].equals(""))
+    			continue;
+    			if(soft[i].contains(">"))
+    			{
+    				String softPro=soft[i].split(">")[0];
+    				String softVal=soft[i].split(">")[1];
+        			Analysis+="((newObj."+soft[i]+")?(ret="+'"'+FiledMap.get(softPro)+"大于"+softVal+'"'+"):"+'"'+'"'+")";
+    			}
+    			if(soft[i].contains("<"))
+    			{
+    				String softPro=soft[i].split("<")[0];
+    				String softVal=soft[i].split("<")[1];
+        			Analysis+="((newObj."+soft[i]+")?(ret="+'"'+FiledMap.get(softPro)+"小于"+softVal+'"'+"):"+'"'+'"'+")";
+    			}
+    			if(soft[i].contains("=="))
+    			{
+    				String softPro=soft[i].split("==")[0];
+    				String softVal=soft[i].split("==")[1];
+        			Analysis+="((newObj."+soft[i]+")?(ret="+'"'+FiledMap.get(softPro)+"等于"+softVal+'"'+"):"+'"'+'"'+")";
+    			}
+    			if(i!=soft.length-1&&!Analysis.equals(""))
+    				Analysis+="||";
+    	}
+		return Analysis;
+    }
+	/**
+     * 统计字段获取表达式 
+     * @param staticMap统计字段MAP，key为英文字段名，value为字段中文
+     *
+     */
+    public static String getStaticStr(HashMap<String, String> staticMap)
+    {
+    	String staticStr="";
+    	for(String key:staticMap.keySet())
+    	{
+    		if(!staticStr.equals(""))
+    			staticStr+="+";
+    		staticStr+='"'+" "+staticMap.get(key)+":"+'"'+"+newObj."+key;
+    	}
+		return staticStr;
+    }
+	
+    /**
+     * 判断当前时间是否是是否处于非报警时间段，如果是则发送报警邮件/短信
+     * @param NO_AlarmTimeStr，报警时间段格式06:30:30-07:30:30,1,0;开始-结束,邮件，短信多个时间段中间以分号间隔
+     * @return 如果是处于非报警时间段返回true,否则返回false
+     */
+    
+    protected  void sendMailSms(ModuleInfo info,String message)
+    {
+    	String[] AlarmTime=info.getModule_Info_AlarmTime().split(";");
+    	Date date=new Date();
+    	String hours=date.getHours() < 10 ? "0"+date.getHours() : date.getHours()+"";
+    	String minutes=date.getMinutes()<10?"0"+date.getMinutes():date.getMinutes()+"";
+    	String seconds=date.getSeconds()<10?"0"+date.getSeconds():date.getSeconds()+"";
+    	String dateStr=hours+minutes+seconds;
+    	int dateInt=Integer.parseInt(dateStr);
+    	for(String alarmTimeStr:AlarmTime)
+    	{
+    		String time=alarmTimeStr.split(",")[0];
+    		String mail=alarmTimeStr.split(",")[1];
+    		String sms=alarmTimeStr.split(",")[2];
+    		int startTime=Integer.parseInt(time.split("-")[0].replaceAll(":", ""));
+    		int endTime=Integer.parseInt(time.split("-")[1].replaceAll(":", ""));
+    		if(dateInt>=startTime&&dateInt<=endTime)
+    		{
+    			if(mail.equals("1"))
+        		{
+    				SendMail(LogFileScanSchedule.receiveEmail,info.getModule_Desc(),message);
+        		}
+        		if(sms.equals("1"))
+        		{
+        			SendSMS(LogFileScanSchedule.receiveMobile,info.getModule_Desc(),message);
+        		}
+    		}
+    	}
+    }
+    
+    
+    /**
+     * 邮件发送方法 
+     * @param receiveEmail
+     * @param subject
+     * @param message
+     */
+    protected void SendMail(String receiveEmail,String subject,String message)
+    {
+    	try
+		{
+    		LogFileScanSchedule.getMailService().sendTextMail(receiveEmail,
+					subject,
+					message);
+			
+			log.info(String.format("模块%s发送邮件成功:%s,",
+					subject, message));
+		}
+		catch(Exception e)
+		{
+			log.error(String.format("模块%s发送邮件失败:%s,",
+					subject, message));
+		}
+    }
+    
+    /**
+     * 短信发送方法 
+     * @param receiveMobile
+     * @param subject
+     * @param message
+     */
+    protected void SendSMS(String receiveMobile,String subject,String message)
+    {
+    	try
+		{
+			messages.setHead(receiveMobile);
+			messages.setBody(subject + message);
+			LogFileScanSchedule.getMessageService().sendMessage(messages);
+			log.info(String.format("模块%s发送短信成功:%s,",
+					subject, message));
+		}
+		catch(Exception e)
+		{
+	    	MessageSMS sms=new MessageSMS();
+			sms.setHead(receiveMobile);
+			sms.setBody(subject + message
+				+ ",请速处理.");
+			messageVector.add(sms);
+			log.error(String.format("模块%s发送短信失败:%s,",
+					subject, message));
+		}
+    }
+	
 	/**
 	 * 根据日志信息写入报警历史库
 	 * 
 	 * @param logData
 	 * 
 	 */
-	private void writeAlarmDao(MonitorLogData logData) {
-		try {
-			AlarmHistory record = logData2AlarmHistory(logData);
-			getSchedule().getAlarmDao().insertDetail(record);
-			log.info(String.format("模块%s插入报警记录到数据库成功." ,logData.getModuleDesc()));
-		} catch (SQLException e) {
-			log.error(String.format("模块%s插入报警记录到数据库出错:%s" ,logData.getModuleDesc(), e.getLocalizedMessage()), e);
-		}
+	private void writeAlarmDao(ModuleData logData,ModuleInfo info,int reportway) {
+			AlarmHistory record;
+			try {
+				record = logData2AlarmHistory(logData,info,reportway);
+				DaoTool.getAlarmHistoryDao().insertDetail(record);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				log.error(String.format("存入历史报警数据库中错误%S", e.getLocalizedMessage()));
+			}
+			log.info(String.format("模块%s插入报警记录到数据库成功." ,logData.getModuleName()));
 	}
 
 	/**
@@ -557,177 +555,19 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 	 * 
 	 * @param logData
 	 * @return
+	 * @throws ParseException 
 	 */
-	protected AlarmHistory logData2AlarmHistory(MonitorLogData logData) {
+	protected AlarmHistory logData2AlarmHistory(ModuleData logData,ModuleInfo info,int reportway) throws ParseException {
 		AlarmHistory record = new AlarmHistory();
-		record.setAlarm_time((int)logData.getAlarm_time());
-		record.setAlarm_content(logData.getText());
-		record.setModuletype(logData.getModuleType());
-		record.setModule_code(logData.getModuleCode());
-		record.setReport_way(logData.getAlarm_status());
-		record.setStatus(logData.getAlarm_status());
-		record.setData_time((int) logData.getDateTime());
+		record.setModule_Desc(info.getModule_Desc());
+		record.setModule_Type_Id(info.getModule_Type_Id());
+		record.setModule_ID(info.getModule_ID());
+		record.setData_time(TimeTools.date2utc(formatDate.parse(logData.getDateTime())));
+		record.setStatus(AlarmHistory.ALARM_STATUS_WARNNING);
+		record.setReport_way(reportway);
+		record.setText(logData.getText());
 		record.setUpdate_time(GlobalTime.systemTimeUtc());
 		return record;
-	}
-
-	/**
-	 * 开始报警处理
-	 * 
-	 * @param conf 配置文件
-	 * @param session 处理人信息
-	 */
-	public void startDealAlarm(LogFileConfigure conf, SessionMap session,String flag) {
-		MonitorLogData logData = conf.getLastObj();
-		//flag为0是正常报警，1为误报
-		logData.setAlarm_status(flag.equals("0")?AlarmHistory.ALARM_STATUS_DEALING:AlarmHistory.ALARM_STATUS_ErrorAlarm);
-		try {
-			  AlarmHistory record = logData2AlarmHistory(logData);
-			  MonitorUser user = (MonitorUser) session.getAttribute(Constants.SESSION_NAME);
-			  
-			  logData.setDeal_opid(user.getOp_id());
-			  record.setDeal_opid(user.getOp_id());
-			  getSchedule().getAlarmDao().updateByPrimaryKey(record);
-			log.info(String.format("模块%s更新报警处理到数据库成功." , logData.getModuleDesc()));
-		} catch (SQLException e) {
-			log.error(String.format("模块%s更新报警处理到数据库出错%s",logData.getModuleDesc(), e.getLocalizedMessage()), e);
-		}
-	}
-
-	/**
-	 * 结束报警处理
-	 * 
-	 * @param conf
-	 */
-	public void finishDealAlarm(LogFileConfigure conf) {
-		MonitorLogData logData = conf.getLastObj();
-		logData.setAlarm_status(AlarmHistory.ALARM_STATUS_FINISH);
-		try {
-			AlarmHistory record = logData2AlarmHistory(logData);
-			getSchedule().getAlarmDao().finishByPrimaryKey(record);
-			log.info(String.format("模块%s结束报警处理到数据库成功." , logData.getModuleDesc()));
-		} catch (SQLException e) {
-			log.error(String.format("模块%s结束报警处理到数据库出错%s" ,logData.getModuleDesc(), e.getLocalizedMessage()), e);
-		}
-	}
-
-	/**
-	 * 获取变量<code>confList</code>的值
-	 * 
-	 * @return 返回的数据类型是<code>List<LogFileConfigure></code>
-	 */
-	public List<LogFileConfigure> getConfList() {
-		return confList;
-	}
-
-	/**
-	 * 设置变量<code> confList</code> 的值
-	 * 
-	 * @param confList
-	 *            <code>confList</code> 参数类型是<code>List<LogFileConfigure></code>
-	 */
-	public void setConfList(List<LogFileConfigure> confList) {
-		this.confList = confList;
-		Map<String, String> nameMap = getSchedule().getConfigure()
-				.getModuleNameMap();
-		
-		for (LogFileConfigure conf : confList) {
-			indexMap.put(conf.getModuleCode(), confList.indexOf(conf));
-			conf.setModuleTypeName(nameMap.get(conf.getModuleType()));
-			conf.setTypeConf(getLogTypeConfigure());
-			getSchedule().getConfigure().putLogFileScan(conf.getModuleCode(),
-					this);
-		}
-	}
-
-	/**
-	 * 获取变量<code>moduleType</code>的值
-	 * 
-	 * @return 返回的数据类型是<code>String</code>
-	 */
-	public String getModuleType() {
-		return moduleType;
-	}
-
-	/**
-	 * 设置变量<code> moduleType</code> 的值
-	 * 
-	 * @param moduleType
-	 *            <code>moduleType</code> 参数类型是<code>String</code>
-	 */
-	public void setModuleType(String moduleType) {
-		this.moduleType = moduleType;
-	}
-
-	/**
-	 * 获取变量<code>logTypeConfigure</code>的值
-	 * 
-	 * @return 返回的数据类型是<code>LogTypeConfigure</code>
-	 */
-	public LogTypeConfigure getLogTypeConfigure() {
-		return logTypeConfigure;
-	}
-	/**
-	 * 设置变量<code> logTypeConfigure</code> 的值
-	 * 
-	 * @param logTypeConfigure
-	 *            <code>logTypeConfigure</code> 参数类型是
-	 *            <code>LogTypeConfigure</code>
-	 */
-	public void setLogTypeConfigure(LogTypeConfigure logTypeConfigure) {
-		this.logTypeConfigure = logTypeConfigure;
-	}
-
-	/**
-	 * 获取变量<code>scaner</code>的值
-	 * 
-	 * @return 返回的数据类型是<code>LogFileScanSchedule</code>
-	 */
-	public LogFileScanSchedule getSchedule() {
-		return schedule;
-	}
-
-	/**
-	 * 设置变量<code> scaner</code> 的值
-	 * 
-	 * @param scaner
-	 *            <code>scaner</code> 参数类型是<code>LogFileScanSchedule</code>
-	 */
-	public void setSchedule(LogFileScanSchedule scaner) {
-		this.schedule = scaner;
-	}
-
-	/**
-	 * 设置日志级别 
-	 * @param level
-	 */
-	public String setLevel(int level){
-		org.apache.log4j.Level le = org.apache.log4j.Level.INFO;
-		switch (level) {
-		case 0:
-			le = org.apache.log4j.Level.DEBUG;
-			break;
-		case 1:
-			le = org.apache.log4j.Level.INFO;
-			break;
-		case 2:
-			le = org.apache.log4j.Level.WARN;
-			break;
-		case 3:
-			le = org.apache.log4j.Level.ERROR;
-			break;
-		case 4:
-			le = org.apache.log4j.Level.FATAL;
-			break;
-		case 5:
-			le = org.apache.log4j.Level.OFF;
-			break;
-		default:
-			break;
-		}
-		log.warn(String.format("类型%s线程设置日志级别%s",getModuleType(),le.toString()));
-		log.setLevel(le);
-		return log.getLevel().toString();
 	}
 	/**
 	 * <p>
@@ -768,19 +608,21 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 	public class LogFileScanThread extends Thread {
 		/** 是否运行标志 */
 		private boolean bRun = true;
-
 		/** 线程序号 */
-		private int no = 0;
-
+		private String no = "";
+		
+		private List<ModuleInfo> moduleList;
+		
+		/** js调用 */
+		private Invocable inv;
 		/**
 		 * 构造器
 		 * 
 		 * @param i
 		 */
-		public LogFileScanThread(int i) {
-			no = i;
+		public LogFileScanThread(String str) {
+			no = str;
 		}
-
 		/*
 		 * (non-Javadoc)
 		 * 
@@ -788,51 +630,38 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 		 */
 		@Override
 		public void run() {
-			while (bRun) {
-					if(messageVector.size()>0)
-					{
-						log.info("开始处理失败的短信报警，条数="+messageVector.size());
-						while(messageVector.size()>0)
-						{
-							try
-							{
-								getSchedule().getMessageService().sendMessage(messageVector.get(0));
-								messageVector.remove(0);
-							}
-							catch(Exception e){
-								log.error("尝试再次发送短信报警失败"+messageVector.get(0).toString()+e.getLocalizedMessage());
-							}
-						}
-						log.info("处理失败的短信报警结束，处理失败的条数="+messageVector.size());
-					}
-				log.info(String.format("类型%s日志扫描线程%d启动", getModuleType(), no));
+			while (isbRun()) {
+				log.info(String.format("日志扫描线程%s启动", no));
 				long start = System.currentTimeMillis();
-				for (LogFileConfigure conf : getConfList()) {
-					if (!conf.isCanScan())
+				for ( int i=0;i<getModuleList().size(); i++) {
+					ModuleInfo info=getModuleList().get(i);
+					if(!info.getScanState().equals("1"))
 						continue;
-					conf.setCanScan(false);
-					log.info(String.format("模块%s开始扫描%s" ,conf.getModuleDesc(),Base64Codec.decode(conf.getUrl())));
+					if (!info.isCanScan())
+						continue;
+					info.setCanScan(false);
+					log.info(String.format("模块%s开始扫描" ,info.getModule_Desc()));
 					try {
 						URL url = null;
 						try {
-							url = new URL(Base64Codec.decode(conf.getUrl()));							
+							url = new URL(Base64Codec.decode(info.getUrl()));							
 						} catch (MalformedURLException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						scanFile(url, conf.getModuleType(), conf);
+						scanFile(url,info,getInv());
 					} catch (MaintenanceMonitorException e) {
-						log.error(String.format("模块%s扫描出错" ,conf.getModuleDesc(), conf.getUrl()), e);
+						log.error(String.format("模块%s扫描出错" ,info.getModule_Desc(), info.getUrl()), e);
 					}
 				}
 				long elapse = System.currentTimeMillis() - start;
-				log.info(String.format("类型%s扫描%d个日志文件结束，耗时%d毫秒", getModuleType(),
-						confList.size(), elapse));
-				if (no == 0)
+				log.info(String.format("线程%s扫描%d个日志文件结束，耗时%d秒", no,
+						getModuleList().size(), elapse/1000));
+				if (no.contains("0"))
 					doClearCanScan();
 				synchronized (this) {
 					try {
-						wait(WRITE_INTERVAL);
+						wait(WRITE_INTERVAL*1000);
 					} catch (InterruptedException e) {
 						log.error(String.format("类型%s日志记录线程被打断异常",getModuleType()),e);
 					}
@@ -840,14 +669,57 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 			}
 		}
 
+		
 		/**
 		 * 重置扫描标记
 		 */
 		private void doClearCanScan() {
-			for (LogFileConfigure conf : confList) {
+			for (ModuleInfo conf : getModuleList()) {
 				conf.setCanScan(true);
 			}
 			SystemHelper.printSystemMemory(null, log);
+		}
+		/**
+		 * 获取变量<code>moduleList</code>的值
+		 * @return 返回的数据类型是<code>ArrayList<ModuleInfo></code>
+		 */
+		public List<ModuleInfo> getModuleList() {
+			return moduleList;
+		}
+		/**
+		 * 设置变量<code> moduleList</code> 的值
+		 * @param moduleList  <code>moduleList</code> 参数类型是<code>ArrayList<ModuleInfo></code>
+		 */
+		public void setModuleList(List<ModuleInfo> moduleList) {
+			this.moduleList = moduleList;
+		}
+		/**
+		 * 获取变量<code>bRun</code>的值
+		 * @return 返回的数据类型是<code>boolean</code>
+		 */
+		public boolean isbRun() {
+			return bRun;
+		}
+		/**
+		 * 设置变量<code> bRun</code> 的值
+		 * @param bRun  <code>bRun</code> 参数类型是<code>boolean</code>
+		 */
+		public void setbRun(boolean bRun) {
+			this.bRun = bRun;
+		}
+		/**
+		 * 获取变量<code>inv</code>的值
+		 * @return 返回的数据类型是<code>Invocable</code>
+		 */
+		public Invocable getInv() {
+			return inv;
+		}
+		/**
+		 * 设置变量<code> inv</code> 的值
+		 * @param inv  <code>inv</code> 参数类型是<code>Invocable</code>
+		 */
+		public void setInv(Invocable inv) {
+			this.inv = inv;
 		}
 	}
 
@@ -887,9 +759,9 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 	 *          </tr>
 	 *          </table>
 	 */
-	protected class ErrorTimes {
+	protected class ErrorValues {
 		/** 各模块错误类型连续发生的次数 */
-		private Map<String, Integer> errorTimesMap = new HashMap<String, Integer>();
+		private Map<Integer, Integer> errorValuesMap = new HashMap<Integer, Integer>();
 
 		/**
 		 * 获得指定类型的次数
@@ -897,24 +769,32 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 		 * @param key
 		 * @return
 		 */
-		public int getTimes(String key) {
-			Integer ret = errorTimesMap.get(key);
+		public int getValues(Integer key) {
+			Integer ret = errorValuesMap.get(key);
 			if (ret == null) {
-				errorTimesMap.put(key, 0);
+				errorValuesMap.put(key, 0);
 				return 0;
 			} else {
 				return ret.intValue();
 			}
 		}
-
 		/**
 		 * 设置指定类型的参数
 		 * 
 		 * @param key
 		 * @param value
 		 */
-		public void setTimes(String key, int value) {
-			errorTimesMap.put(key, value);
+		public void addValues(Integer key) {
+			errorValuesMap.put(key, errorValues.getValues(key)+1);
+		}
+		/**
+		 * 设置指定类型的参数
+		 * 
+		 * @param key
+		 * @param value
+		 */
+		public void setValues(Integer key, int value) {
+			errorValuesMap.put(key, value);
 		}
 	}
 
@@ -922,11 +802,88 @@ public abstract class AbstractLogFileScan implements ILogFileScan,ILogSetable {
 	 * FIXME
 	 * 
 	 * @param args
+	 * @throws ParseException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ParseException {
 		// TODO Auto-generated method stub
-		String url=Base64Codec.decode("aHR0cDovLzIxOS4yMzIuMTk2LjEyOjgwODAvUHVibGljVHJpcFByb3ZpZGUvbG9hZFVwZGF0ZVRpbWU/YXNrPTQ4NmVmYTI0ZTRmNWMyMDMwMyZkYXRhdHlwZT1ESVNUVElNRQ");
-		System.out.println(url);
+	
 	}
 
+	/**
+	 * 获取变量<code>moduleInfoList</code>的值
+	 * @return 返回的数据类型是<code>List<ModuleInfo></code>
+	 */
+	public List<ModuleInfo> getModuleInfoList() {
+		return moduleInfoList;
+	}
+
+	/**
+	 * 设置变量<code> moduleInfoList</code> 的值
+	 * @param moduleInfoList  <code>moduleInfoList</code> 参数类型是<code>List<ModuleInfo></code>
+	 */
+	public void setModuleInfoList(List<ModuleInfo> moduleInfoList) {
+		this.moduleInfoList = moduleInfoList;
+	}
+
+	/**
+	 * 获取变量<code>moduleType</code>的值
+	 * @return 返回的数据类型是<code>ModuleType</code>
+	 */
+	public ModuleType getModuleType() {
+		return moduleType;
+	}
+
+	/**
+	 * 设置变量<code> moduleType</code> 的值
+	 * @param moduleType  <code>moduleType</code> 参数类型是<code>ModuleType</code>
+	 */
+	public void setModuleType(ModuleType moduleType) {
+		this.moduleType = moduleType;
+	}
+
+	/**
+	 * 获取变量<code>moduleTypeFieldMap</code>的值
+	 * @return 返回的数据类型是<code>HashMap<String,String></code>
+	 */
+	public HashMap<String, String> getModuleTypeFieldMap() {
+		return ModuleTypeFieldMap;
+	}
+
+	/**
+	 * 设置变量<code> ModuleTypeFieldMap</code> 的值
+	 * @param moduleTypeFieldMap  <code>moduleTypeFieldMap</code> 参数类型是<code>HashMap<String,String></code>
+	 */
+	public void setModuleTypeFieldMap(ModuleType moduleType,HashMap<String, String> ModuleTypeFieldMap) {
+		String[] field=moduleType.getModule_Type_Field().split(",");
+		String[] field_zn=moduleType.getModule_Type_Field_Zn().split(",");
+		for(int i=0;i<field.length;i++)
+			ModuleTypeFieldMap.put(field[i], field_zn[i]);
+	}
+
+	/**
+	 * 获取变量<code>staticMap</code>的值
+	 * @return 返回的数据类型是<code>HashMap<String,String></code>
+	 */
+	public HashMap<String, String> getStaticMap() {
+		return staticMap;
+	}
+
+	/**
+	 * 设置变量<code> staticMap</code> 的值
+	 * @param staticMap  <code>staticMap</code> 参数类型是<code>HashMap<String,String></code>
+	 */
+	public void setStaticMap(ModuleType moduleType,HashMap<String, String> staticMap) {
+		String[] staticField=moduleType.getModule_Type_Static().split(",");
+		for(int i=0;i<staticField.length;i++)
+			staticMap.put(staticField[i], ModuleTypeFieldMap.get(staticField[i]));
+	}
+
+	/**
+	 * 获取变量<code>threadlist</code>的值
+	 * @return 返回的数据类型是<code>ArrayList<LogFileScanThread></code>
+	 */
+	public ArrayList<LogFileScanThread> getThreadlist() {
+		return Threadlist;
+	}
+	
 }

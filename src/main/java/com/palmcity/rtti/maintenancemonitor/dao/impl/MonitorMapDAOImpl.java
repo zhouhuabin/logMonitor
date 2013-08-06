@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.caits.lbs.framework.dao.IBusinessDAO;
 import com.caits.lbs.framework.utils.ClassUtils;
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MonitorMap;
 
 public class MonitorMapDAOImpl implements MonitorMapDAO{

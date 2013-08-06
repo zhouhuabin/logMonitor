@@ -19,7 +19,6 @@ import com.common.ajax.server.SessionMap;
 import com.palmcity.rtti.maintenancemonitor.api.MonitorLogData;
 import com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory;
 import com.palmcity.rtti.maintenancemonitor.bean.Alarm_Ticket;
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MonitorMap;
 import com.palmcity.rtti.maintenancemonitor.bean.MonitorUser;
 import com.palmcity.rtti.maintenancemonitor.dao.impl.AlarmHistoryDAO;
@@ -83,21 +82,22 @@ public class MonitorAlarm_TicketService  extends BaseXmlDaoService {
 		
 		AbstractLogFileScan scan = LogFileScanSchedule.LogFileScanMap.get(moduleType);
 		List<MonitorLogData> dataList = new ArrayList<MonitorLogData>();
-		List<LogFileConfigure> confList=scan.getConfList();
-		
-		/**0为正常报警，1为误报**/
+		//List<LogFileConfigure> confList=scan.getConfList();
+		/*List<LogFileConfigure1> confList=null;
+
+		*//**0为正常报警，1为误报**//*
 		if(flag.equals("0"))
 		{
 			callDAOToMapXML(alarm_TicketDAO, paramMethod, paramXML, eRequest, resData);
 		}
-		for(LogFileConfigure logFile:confList)
+		for(LogFileConfigure1 logFile:confList)
 		{
 			if((logFile.getModuleCode()).equalsIgnoreCase(moduleCode))
 			{
-				scan.startDealAlarm(logFile, sessio,flag);
+				//scan.startDealAlarm(logFile, sessio,flag);
 				dataList.add(logFile.getLastObj());
 			}
-		}
+		}*/
 		String array = JsonUtil.getJsonStringFromObject(dataList);
 		resData.addText(array.toString());
 	}

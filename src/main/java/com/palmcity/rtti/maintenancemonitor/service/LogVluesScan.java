@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.codehaus.jackson.JsonParseException;
 import org.springframework.util.Assert;
 
 import com.caits.lbs.framework.action.BaseAction;
@@ -29,7 +30,6 @@ import com.caits.lbs.framework.utils.JsonUtil;
 import com.caits.lbs.framework.utils.StringUtils;
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorException;
-import com.palmcity.rtti.maintenancemonitor.dao.impl.LogFileConfigureDAO;
 
 /**
  * <p>
@@ -73,7 +73,16 @@ public class LogVluesScan extends BaseAction{
 	private static final long serialVersionUID = 1L;
 
 	
-
+	static String[] discard=
+		{"deal_opid","moduleCode","alarmCondition","encoding","erroValue","hot_x","id","mailAlarm","mapCode","smsAlarm","relationAlarm","hot_y","alarm_report_way","moduleType","alarm_status","carCount_max","moduleDesc","alarm_time","alarm","url"};
+	static ArrayList<String> discardList=new ArrayList<String>();
+	static{
+		for(String dis:discard)
+		{
+			discardList.add(dis);
+		}
+	}
+	
 	/** 日志记录器 */
 	public Logger log = Logger.getLogger(getClass());
 	
@@ -104,6 +113,10 @@ public class LogVluesScan extends BaseAction{
 	/** BOOLEAN类型标识 */
 	private final static String BOOLEAN_TYPE="7";
 	
+	
+	
+	
+	private final static String READERRO="read error";
 
 	public void commonActionParser() {
 		try {
@@ -125,19 +138,27 @@ public class LogVluesScan extends BaseAction{
 	 */
 	protected void getLogVlues(Map<String, String> paramMap) throws IOException, MaintenanceMonitorException {
 		String logUrl=Base64Codec.decode((String)paramMap.get("logurl"));
+		String encoding=(String)paramMap.get("encoding");
+		
+		Map<String, Object> resultMap=new HashMap<String, Object>();
 		URL url = new URL(logUrl);
-		String jsonStr=scanFile(url);
-		Map<String, Object> resultMap=getLogValuesMap(jsonStr);
-		log.info("获取所有模块的配置文件成功");
+		String jsonStr=scanFile(url,encoding);
+		if(jsonStr.equals(READERRO))
+		{
+			resultMap.put("erro_", "读取URL错误,请检查");
+		}
+		else {
+				getLogValuesMap(jsonStr,resultMap);
+		}
 		String array = JsonUtil.getJsonStringFromMap(resultMap);
 		sendJsonText(array.toString());
 	}
 	
-	public static Map<String, Object> getLogValuesMap(String jsonStr) throws MalformedURLException, MaintenanceMonitorException
+	public static Map<String, Object> getLogValuesMap(String jsonStr,Map<String, Object> resultMap) throws MalformedURLException, MaintenanceMonitorException
 	{
-			Map<String,Object> resultMap=new HashMap<String,Object>();
- 				Map<String, Object> test=JsonUtil.getMapFromJsonString(jsonStr);
- 				for(String key:test.keySet())
+		try {
+			Map<String, Object> test=JsonUtil.getMapFromJsonString(jsonStr);
+				for(String key:test.keySet())
  				{
  					if(test.get(key)==null)
  						test.put(key, "无");
@@ -155,7 +176,7 @@ public class LogVluesScan extends BaseAction{
  							{
  								listMap.put(attri+MARK+getObjType(litAttri.get(attri)), "无");
  							}
- 							resultMap.put(key+"@"+LIST_TYPE, listMap);
+ 							//resultMap.put(key+"@"+LIST_TYPE, listMap);
  					}
  					else if(type.equals(MAP_TYPE))
  					{
@@ -173,7 +194,7 @@ public class LogVluesScan extends BaseAction{
  								}
  								break;
  							}
- 							resultMap.put(key+MARK+MAP_TYPE, mapMap);
+ 							//resultMap.put(key+MARK+MAP_TYPE, mapMap);
  					}
  					else if(type.equals(OBJECT_TYPE))
  					{
@@ -185,14 +206,19 @@ public class LogVluesScan extends BaseAction{
  						{
  							objMap.put(objKey+MARK+getObjType(objMap.get(objKey)), "无");
  						}
- 						resultMap.put(key+MARK+OBJECT_TYPE, objMap);
+ 						//resultMap.put(key+MARK+OBJECT_TYPE, objMap);
  					}
  					else
  					{
- 						resultMap.put(key+MARK+type,"无");
+ 						if(!discardList.contains(key))
+ 							resultMap.put(key+MARK+type,"无");
  					}
  				}
-				return resultMap;
+		} catch (Exception e) {
+			// TODO: handle exception
+			resultMap.put("erro_", "日志内容格式有误,请检查!");
+		}
+		return resultMap;
 	}
 
 	public static String getObjType(Object object)
@@ -232,7 +258,7 @@ public class LogVluesScan extends BaseAction{
 			}
 		}
 	}
-	public static String scanFile(URL url)throws MaintenanceMonitorException {
+	public static String scanFile(URL url,String encoding)throws MaintenanceMonitorException {
 		String line = null;
 		try {
 			URLConnection  urlCon = url.openConnection();
@@ -240,7 +266,7 @@ public class LogVluesScan extends BaseAction{
 			InputStream is = urlCon.getInputStream();
 			/**判断日志文件的最后修改时间**/
 			BufferedReader br = new BufferedReader(new InputStreamReader(
-				is, "utf-8"));
+				is, encoding));
 			while (br.readLine()!= null&&!br.readLine().equals("")) {
 				line=br.readLine();
 				return line;
@@ -248,9 +274,9 @@ public class LogVluesScan extends BaseAction{
 			br.close();
 			is.close();
 		} catch (MalformedURLException e) {
-	
+			return READERRO;
 		} catch (IOException e) {
-	
+			return READERRO;
 		}
 		return line;
 }

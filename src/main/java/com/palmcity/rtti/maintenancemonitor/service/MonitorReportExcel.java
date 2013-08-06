@@ -27,8 +27,6 @@ import com.caits.lbs.framework.Constants;
 import com.common.ajax.server.IRequest;
 import com.common.ajax.server.SessionMap;
 import com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory;
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
-import com.palmcity.rtti.maintenancemonitor.bean.LogTypeConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MonitorUser;
 import com.palmcity.rtti.maintenancemonitor.dao.impl.AlarmHistoryDAO;
@@ -180,7 +178,7 @@ public class MonitorReportExcel implements IRequest {
 		}
 		for(AlarmHistory alarm:list)
 		{
-			reportExcel+=ModuleTypeMap.get(alarm.getModuletype())+","+ModuleCodeMap.get(alarm.getModule_code())+","+alarm.getAlarm_time()+","+(alarm.getAlarm_content().replace(",",";"))+","+getStatusName(alarm.getStatus())+",\r\n";
+			//reportExcel+=ModuleTypeMap.get(alarm.getModuletype())+","+ModuleCodeMap.get(alarm.getModule_code())+","+alarm.getAlarm_time()+","+(alarm.getAlarm_content().replace(",",";"))+","+getStatusName(alarm.getStatus())+",\r\n";
 		}
 		MonitorUser user = (MonitorUser) sessio.getAttribute(Constants.SESSION_NAME);
 		String path=System.getProperty("user.dir")+"/";
@@ -278,7 +276,7 @@ public class MonitorReportExcel implements IRequest {
 	
 	public void setModuleMap()
 	{
-		//获得模块类型的map
+		/*//获得模块类型的map
 		ModuleTypeMap = getConfigure().getModuleNameMap();
 		//获得模块的map
 		Map<String,LogTypeConfigure> confMap = getConfigure().getConfMap();
@@ -291,6 +289,6 @@ public class MonitorReportExcel implements IRequest {
 					ModuleCodeMap.put(conf.getModuleCode(), conf.getModuleDesc());
 				}
 			}
-		}
+		}*/
 	}
 }

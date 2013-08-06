@@ -9,8 +9,10 @@ package com.palmcity.rtti.maintenancemonitor.service;
 
 import java.net.URL;
 
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
+import javax.script.Invocable;
+
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorException;
+import com.palmcity.rtti.maintenancemonitor.bean.ModuleInfo;
 
 /**
  * <p>
@@ -50,5 +52,7 @@ import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorException;
  */
 public interface ILogFileScan {
 
-	public void scanFile(URL url,String moduleType,LogFileConfigure conf) throws MaintenanceMonitorException;
+
+	void scanFile(URL url, ModuleInfo info, Invocable inv)
+			throws MaintenanceMonitorException;
 }

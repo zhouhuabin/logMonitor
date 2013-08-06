@@ -9,13 +9,13 @@ package com.palmcity.rtti.maintenancemonitor.service;
 
 import java.util.List;
 
-import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
+
 /**
  * <p>
  * ImplReceiveLogFileScan
  * </p>
  * <p>
- * 用途：FCD处理日志文件行处理实现类
+ * 用途：接收日志文件行处理实现类
  * </p>
  * 
  * @author 周华彬(zhouhuabin@ctfo.com, zhou_hua_bin@163.com)
@@ -46,18 +46,21 @@ import com.palmcity.rtti.maintenancemonitor.bean.LogFileConfigure;
  *          </tr>
  *          </table>
  */
-public class ImplEventLogFileScan extends AbstractLogFileScan {
+public class ImplLogFileScan extends AbstractLogFileScan {
 
+	
 	/**
 	 * 构造器 
 	 */
-	public ImplEventLogFileScan() {
+	public ImplLogFileScan() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 
-	public ImplEventLogFileScan(List<LogFileConfigure> cfList) {
-		super(cfList);
+	@Override
+	public String setLevel(int arg0) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/*
@@ -67,9 +70,4 @@ public class ImplEventLogFileScan extends AbstractLogFileScan {
 	 * com.palmcity.rtti.maintenancemonitor.service.AbstractLogFileScan#parseLogLine
 	 * (java.lang.String, java.lang.String)
 	 */
-	@Override
-	public void parseLogLine(String line, String moduleType,LogFileConfigure conf) {
-		super.parseLogLine(line, conf.getModuleType(), conf);
-	}
-	
 }
