@@ -112,7 +112,10 @@ public class MonitorUserDAOImpl implements MonitorUserDAO {
 					MonitorUser.class);
 			record.setOp_id(maxOpid + 1);
 			record.setUpdate_time(GlobalTime.systemTimeUtc());
-			return getBusinessDAO().addBusiness("monitorUser_insert", record);
+			Map<String, Object> retMap = getBusinessDAO().addBusiness("monitorUser_insert", record);
+			retMap.put("result", "1");
+			retMap.put("id", 1);
+			return retMap;
 		} else {
 			Map<String, Object> retMap = new HashMap<String, Object>();
 			retMap.put("result", 0);

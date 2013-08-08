@@ -2,6 +2,8 @@ package com.palmcity.rtti.maintenancemonitor.action;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -13,6 +15,7 @@ import com.caits.lbs.framework.action.BaseAction;
 import com.caits.lbs.framework.utils.XmlUtil;
 import com.common.ajax.server.IRequest;
 import com.common.ajax.server.RequestLocalParser;
+import com.common.ajax.server.RequestParser;
 import com.common.ajax.server.SessionMap;
 import com.palmcity.rtti.maintenancemonitor.bean.MonitorUser;
 
@@ -96,8 +99,7 @@ public class LoginAction extends BaseAction {
 		MonitorUser user = new MonitorUser();
 		Document requestDoc = getRequestDoc();
 		Element root = requestDoc.getRootElement();
-		if (getUserName() != null && !"".equals(getUserName())
-				&& getPassword() != null && !"".equals(getPassword())
+		if (getPassword() != null && !"".equals(getPassword())
 				&& getImgCode() != null && !"".equals(getImgCode())) {
 			if (!checkCode(imgCode)) {
 				msg = "验证码错误,请重新输入!";
@@ -114,6 +116,13 @@ public class LoginAction extends BaseAction {
 			String loginRe = responseLoginDoc(doc, user);
 			pw.print(doc.asXML());
 			
+		}else{
+			msg = "用户信息错误,请重新输入!";
+			Element base = root.element(IRequest.XML_DATA).element(getModelName());
+			base.addAttribute("result", "-1");
+			base.addAttribute("msg", msg);
+			pw.print(requestDoc.asXML());
+			return;
 		}
 
 	}
@@ -303,4 +312,46 @@ public class LoginAction extends BaseAction {
 		this.msg = msg;
 	}
 
+	/**
+	 * 接收客户端请求，并调用IRequest进行处理，返回相应结果给客户端
+	 */
+	public void commonActionParserJson() {
+		HttpServletResponse response = getResponse();
+		PrintWriter pw = null;
+		try {
+			pw = response.getWriter();
+		} catch (IOException e) {
+			log.debug("系统错误" + e);
+		}
+
+		Document doc = null;
+		try {
+			doc = getServiceParser().request(getRequestDoc(),
+					RequestLocalParser.getSession(getRequest()));
+				response.setContentType(ContentTypeJson);
+				String str = buildJsonByDocument(doc,1);
+				pw.write(str);
+		} catch (SecurityException e) {
+			log.error("服务处理安全错误," + e.getLocalizedMessage(), e);
+		} catch (NoSuchMethodException e) {
+			log.error("服务处理方法错误," + e.getLocalizedMessage(), e);
+		} catch (IllegalAccessException e) {
+			log.error("服务处理非法访问错误," + e.getLocalizedMessage(), e);
+		} catch (InvocationTargetException e) {
+			log.error("服务处理呼叫目标错误," + e.getLocalizedMessage(), e);
+		} catch (SQLException e) {
+			log.error("服务处理数据库错误," + e.getLocalizedMessage(), e);
+		} catch (RuntimeException e) {
+			log.error("服务处理运行时错误," + e.getLocalizedMessage(), e);
+		} catch (Exception ie) {
+			log.error("服务处理错误," + ie.getLocalizedMessage(), ie);
+			doc = RequestParser.createError("server",IRequest.ERROR_RUNTIME_ACCESS,
+					IRequest.ERROR_RUNTIME_DESC+",MSG="+ie.getLocalizedMessage());
+			String str = XmlUtil.documentToString(doc);
+			pw.write(str);
+			pw.flush();
+			pw.close();
+		}
+		
+	}
 }

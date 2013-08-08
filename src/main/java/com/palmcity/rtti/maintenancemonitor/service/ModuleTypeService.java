@@ -82,7 +82,7 @@ public class ModuleTypeService extends BaseAction{
 	
 	public void commonActionParser() {
 		try {
-			Map<String, Object> paramMap = buildParamMap2String(getRequest().getParameterMap());
+			Map<String, Object> paramMap = convertParamMap2String(getRequest().getParameterMap());
 			
 			/*String MODULE_TYPE_FIELD=paramMap.get("module_type_field");
 			String MODULE_TYPE_FIELD_ZN=paramMap.get("module_type_field_zn");
@@ -182,7 +182,7 @@ public class ModuleTypeService extends BaseAction{
 	 * @param paramMap
 	 * @return
 	 */
-	protected Map<String, Object> buildParamMap2String(Map<String, String> paramMap) {
+	protected Map<String, Object> convertParamMap2String(Map<String, String> paramMap) {
 		Map<String, Object> cloneMap = new HashMap<String, Object>();
 		for (Object key : paramMap.keySet()) {
 			Object val = paramMap.get(key);

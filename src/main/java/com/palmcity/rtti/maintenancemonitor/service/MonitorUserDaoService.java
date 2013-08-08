@@ -202,7 +202,7 @@ public class MonitorUserDaoService extends BaseXmlDaoService {
 		String[] paramMethod = { "queryListByCondition" };// daomethod
 		String[] paramXML = {};// 输出xml属性
 		eRequest=(Element) eRequest.elements().get(0);
-		callDAOToListBeanJson(monitorUserDAO, paramMethod, paramXML, eRequest, resData);
+		callDAOToListXML(monitorUserDAO, paramMethod, paramXML, eRequest, resData);
 	}
 	
 	/**

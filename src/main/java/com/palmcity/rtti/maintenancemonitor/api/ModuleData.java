@@ -1,17 +1,16 @@
 package com.palmcity.rtti.maintenancemonitor.api;
 
-import com.palmcity.rtti.maintenancemonitor.bean.AlarmHistory;
 
 public class ModuleData {
 	
 	/** 报警处理状态-未读取 */
-	public final static String ALARM_STATUS_NOTREAD = "<img src='script/index_data/Gray.png'/>";
+	public final static String ALARM_STATUS_NOTREAD = "<img src='images/Gray.png'/>";
 	/** 报警处理状态-无报警/误报  */
-	public final static String ALARM_STATUS_NOWARN = "<img src='script/index_data/green.png'/>";
+	public final static String ALARM_STATUS_NOWARN = "<img src='images/green.png'/>";
 	/** 报警处理状态-报警中 */
-	public final static String ALARM_STATUS_ALARMING = "<img src='script/index_data/aed.png'/>";
+	public final static String ALARM_STATUS_ALARMING = "<img src='images/aed.png'/>";
 	/** 报警处理状态-警告中 */
-	public final static String ALARM_STATUS_WARNNING = "<img src='script/index_data/yello.png'/>";
+	public final static String ALARM_STATUS_WARNNING = "<img src='images/yello.png'/>";
 	
 	
 	/** 模块名称 */

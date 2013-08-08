@@ -17,6 +17,11 @@
 			<result name="xmlMessage" type="plainText"></result>
 			<!-- 注意：struts2.1以后用 plainText -->
 		</action>
+		<action name="getJsonString" class="LoginAction" method="commonActionParserJson">
+			<result name="xmlMessage" type="plainText"></result>
+			<!-- 注意：struts2.1以后用 plainText -->
+		</action>
+		
 		<action name="get_loginInfo" class="LoginAction" method="getLoginXml"> 
                 <result name="xmlMessage" type="plainText"></result>   
       	 </action> 

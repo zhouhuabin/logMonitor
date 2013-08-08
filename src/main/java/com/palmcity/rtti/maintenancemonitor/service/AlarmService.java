@@ -85,7 +85,7 @@ public class AlarmService extends BaseAction{
 	
 	public void commonActionParser() {
 		try {
-			Map<String, Object> paramMap = buildParamMap2String(getRequest().getParameterMap());
+			Map<String, Object> paramMap = convertParamMap2String(getRequest().getParameterMap());
 			
 			String method=paramMap.get("method").toString();
 			
@@ -125,7 +125,7 @@ public class AlarmService extends BaseAction{
 	 * @param paramMap
 	 * @return
 	 */
-	protected Map<String, Object> buildParamMap2String(Map<String, String> paramMap) {
+	protected Map<String, Object> convertParamMap2String(Map<String, Object> paramMap) {
 		Map<String, Object> cloneMap = new HashMap<String, Object>();
 		for (Object key : paramMap.keySet()) {
 			Object val = paramMap.get(key);

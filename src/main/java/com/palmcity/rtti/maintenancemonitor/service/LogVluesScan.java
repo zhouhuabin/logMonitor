@@ -21,14 +21,11 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.codehaus.jackson.JsonParseException;
-import org.springframework.util.Assert;
 
 import com.caits.lbs.framework.action.BaseAction;
 import com.caits.lbs.framework.utils.Base64Codec;
 import com.caits.lbs.framework.utils.JsonUtil;
 import com.caits.lbs.framework.utils.StringUtils;
-import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorConfigure;
 import com.palmcity.rtti.maintenancemonitor.bean.MaintenanceMonitorException;
 
 /**
@@ -120,7 +117,7 @@ public class LogVluesScan extends BaseAction{
 
 	public void commonActionParser() {
 		try {
-			Map<String, String> paramMap = buildParamMap2String(getRequest().getParameterMap());
+			Map<String, String> paramMap = convertParamMap2String(getRequest().getParameterMap());
 			getLogVlues(paramMap);
 			System.out.print("");
 		} catch (Exception e) {
@@ -301,7 +298,7 @@ public class LogVluesScan extends BaseAction{
 	 * @param paramMap
 	 * @return
 	 */
-	protected Map<String, String> buildParamMap2String(Map<String, String> paramMap) {
+	protected Map<String, String> convertParamMap2String(Map<String, String> paramMap) {
 		Map<String, String> cloneMap = new HashMap<String, String>();
 		for (Object key : paramMap.keySet()) {
 			Object val = paramMap.get(key);
