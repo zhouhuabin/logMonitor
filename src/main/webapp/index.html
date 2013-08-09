@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>掌城交通信息平台监测系统</title>
+<link rel="stylesheet" type="text/css" href="css/css.css" />
+<link rel="stylesheet" type="text/css" href="css/login_style.css" />
+<script type="text/javascript" src="modules/common/common.js" ></script>
+<script type="text/javascript" src="modules/common/jquery-1.4.2.min.js"></script>   
+<script type="text/javascript" src="modules/common/jquery.loadmask.js"></script>
+<script type="text/javascript" src="modules/common/sha1.js"></script>
+<script type="text/javascript" src="modules/common/util.js"></script>
+<script language="javascript">
+	//得到文档宽高值并赋给con这个元素
+	var conWidHeig = function() {
+		var domWidth = document.documentElement.clientWidth;
+		var domheight = document.documentElement.clientHeight;
+		$(".login_content").css({
+			"width" : domWidth,
+			"height" : domheight
+		});
+	}
+	//通过计算得到box垂直水平居中
+	var conBoxLeftTop = function() {
+		var domBoxLeft = (document.documentElement.clientWidth - 799) / 2;
+		var domBoxTop = (document.documentElement.clientHeight - 375) / 2; //349
+		$(".login_box").css({
+			"left" : domBoxLeft,
+			"top" : domBoxTop
+		});
+	}
+	//按钮鼠标滑过效果
+	var mouseOver = function() {
+		$(".but01_hover,.but02_hover").css('opacity', 0).hover(function() {
+			$(this).stop().fadeTo(650, 1);
+		}, function() {
+			$(this).stop().fadeTo(650, 0);
+		});
+
+	}
+
+	function submitEnter(e) {
+		var k = window.event ? e.keyCode : e.which;
+		if (k == 13)
+			submit();
+	}
+	function reset() {
+		$("input[name=username]").val("");
+		$("input[name=password]").val("");
+		$("input[name=imgCode]").val("");
+		$("#login_msg").html("&nbsp;&nbsp;");
+		$("input[name=imgCode]").focus();
+	}
+	function submit() {
+		var userName = $("input[name=username]").val();
+		var password = $("input[name=password]").val();
+		var imgCode = $("input[name=imgCode]").val();
+		if (userName == "") {
+			$("#login_msg").html("请输入用户名.");
+			return;
+		}
+		if (password == "") {
+			$("#login_msg").html("请输入密码.");
+			return;
+		}
+		if (imgCode == "") {
+			$("#login_msg").html("请输入验证码.");
+			return;
+		}
+		$("#login_msg").html("&nbsp;");
+		$(".login_content").loadMask("");
+		//password = hex_sha1(password).toLowerCase();
+		
+		$.ajax({
+			url : 'login.action',
+			type : "POST",
+			data : {
+				modelName:"MonitorUser",
+				typeName:"SysOperatorLogin",
+				serverName:"service.monitorUserService",
+				account : userName,
+				password: hex_sha1(password),
+				imgCode : imgCode
+			},
+			dataType : "xml",
+			cache : false,
+			success : function(x, textStatus) {
+				//debugger;
+				var ele = x.documentElement.firstChild.firstChild;
+				var data = eleAll2Object(ele);
+				if (data.result == "1" || data.result == 1) {
+					PMS.aaa=userName;
+					window.location.href = "main.htm";
+				} else {
+					$("#login_msg").html(data.msg);
+					$("#imgCode_img").attr('src',
+							'RondamImage.action?d' + (new Date().getTime()));
+					$(".login_content").unLoadMask("");
+				}
+			},
+			error : function(e, s) {
+				alert("与服务器通讯错误,"+e);
+			}
+		});
+	}
+
+	$(document).ready(function() {
+		//重新调整页面大小
+		conWidHeig();
+		//居中设置登录框
+		conBoxLeftTop();
+		$(window).resize(function() {
+			conWidHeig();
+			conBoxLeftTop();
+		});
+		mouseOver();
+
+		$("a").bind("focus", function() {
+			if (this.blur)
+				this.blur();
+		});
+		$("input[name=userName]").blur(function() {
+			if (this.value == "")
+				$("#login_msg").html("请输入用户名.");
+		});
+		$("input[name=password]").blur(function() {
+			if (this.value == "")
+				$("#login_msg").html("请输入密码.");
+		});
+		$("input[name=imgCode]").blur(function() {
+			if (this.value == "")
+				$("#login_msg").html("请输入验证码.");
+		});
+		$("#login").click(function() {
+			submit();
+		});
+		$("#reset").click(function() {
+			reset();
+		});
+	});
+</script>
+</head>
+
+<body onkeypress="return submitEnter(event);">
+<div class="login_content" id="cpage">
+<div class="login_box"><!--登录页面背景start-->
+<div class="login_bj">
+<form action="" method="get">
+<table width="336px" height="99px" border="0" cellpadding="0"
+	cellspacing="0">
+	<tr>
+		<td width="62" height="33">&nbsp;</td>
+		<td colspan="2">&nbsp;</td>
+		<td width="40">&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+		<td colspan="2" valign="top">
+		<table width="250px" height="150px" border="0" cellpadding="0"
+			cellspacing="0">
+			<tr>
+				<td width="45px" height="30px" >用&nbsp;&nbsp;&nbsp;户</td>
+				<td width="160px" height="30px" align="left">
+					<label><input type="text" name="username" class="input" value="monitor@palmcity.cn"/></label>
+				</td>
+				<td width="40px"></td>
+			</tr>
+			<tr>
+				<td>密&nbsp;&nbsp;&nbsp;码</td>
+				<td align="left">
+					<input type="password" name="password" class="input" value=""/>
+				</td>
+			</tr>
+			<tr>
+				<td>验证码</td>
+				<td height="30px" align="left">
+					<input id="verification" name="imgCode" type="text" class="input01" />
+						<div class="img">
+							<img src="RondamImage.action" width="62px"	height="22px" id="imgCode_img" onclick="this.src='RondamImage.action?d'+(new Date().getTime());" alt="请输入此验证码，如看不清请点击刷新" />
+						</div>
+				</td>
+				<td>
+					<div class="img" >
+						<a href="javascript:void(0);"	onclick="$('#imgCode_img').attr('src','RondamImage.action?d'+(new Date().getTime()));" style="color:#F00;">刷新</a>
+					</div>
+				</td>
+			</tr>
+			
+			<tr>
+				<td height="30px" colspan="2" align="center" valign="middle">
+				<div class="font01" id="login_msg"></div>
+				</td>
+			</tr>
+			<tr>
+				<td height="30px" colspan="2" align="center" valign="middle">
+				<div id="login" class="but but01">
+				<div class="but01_hover"></div>
+				</div>
+				<div id="reset" class="but but02">
+				<div class="but02_hover"></div>
+				</div>
+				</td>
+			</tr>
+		</table>
+		</td>
+		<td></td>
+	</tr>
+</table>
+</form>
+</div>
+<!--登录页面背景end--></div>
+<!--end login_box--></div>
+</body>
+</html>

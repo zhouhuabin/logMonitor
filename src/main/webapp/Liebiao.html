@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>Accordion - jQuery EasyUI Demo</title>
+<link rel="stylesheet" type="text/css" href="easyUI/css/themes/default/easyui.css"/>
+<link rel="stylesheet" type="text/css" href="easyUI/css/themes/icon.css"/>
+<link rel="stylesheet" type="text/css" href="easyUI/css/demo.css"/>
+<script type="text/javascript" src="modules/common/base64.js"></script>
+<script type="text/javascript" src="modules/common/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="easyUI/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="modules/js/Liebiao.js"></script>
+	
+	<script type="text/javascript"></script>
+</head>
+<body>
+<p style="text-align:left;margin:0 auto;"><span><select id="interval" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="0">请求间隔 </option>
+                    <option value="30000">30秒</option>
+                    <option value="60000">60秒</option>
+                    <option value="180000">180秒</option>
+                    <option value="300000">300秒</option>
+                </select></span><a href="#" class="easyui-linkbutton" icon="icon-add" onclick="startRequest()">开始</a>&nbsp;&nbsp;&nbsp;<a onclick="endRequest()" class="easyui-linkbutton" icon="icon-cancel">停止</a><span id="requestStatus"></span></p>
+	<div id="dataBody" class="dataBody">
+	</div>
+	<script type="text/javascript">
+	initAccord();
+	</script>
+</body>
+</html>
