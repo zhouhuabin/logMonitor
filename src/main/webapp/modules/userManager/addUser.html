@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/default/easyui.css"/>
+<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/icon.css"/>
+<link href="../../easyUI/css/form.css" rel="stylesheet" type="text/css" />
+<link href="../../easyUI/css/windowtip.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../common/base64.js"></script>
+<script type="text/javascript" src="../common/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="../../easyUI/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../../easyUI/js/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../common/common.js"></script>
+<script type="text/javascript" src="../common/util.js"></script>
+<script type="text/javascript" src="../common/sha1.js"></script>
+<style type="text/css">
+         body{ font-size:12px;}
+        .l-table-edit {}
+        .l-table-edit-td{ padding:5px;}
+        .l-verify-tip{ left:230px; top:120px;}
+        .l-button-submit,.l-button-reset{width:80px; float:left; margin-left:10px; padding-bottom:2px;}
+        
+    </style>
+
+<script type="text/javascript">
+	//debugger;
+	var editor_role_id=null;
+	var paramMap =parseUrl2Map(window.location.href);
+	var actionType = paramMap['actionType'];
+	var userId=0;
+	var old_password=null;
+	$(document).init(function(){
+		
+		 if(actionType=="edit")
+	    	{
+		    	userId=paramMap['op_id'];
+		    	var o = this;
+				JAjax('getJsonString.action', {
+					op_id:userId,
+					modelName : "MonitorUser",
+					typeName : "detailMonitorUser",
+					serverName : "service.monitorUserService"
+				}, 'json', function(x) {
+					// 解释json
+					var data = x[0];
+					//for(var i = 0; i < data.length; i++){
+					$(o).find("form#addUser_form").find("input").each(
+							function() {
+								var datai = data;
+								editor_role_id=data["role_id"];
+								var name = $(this).attr("id");
+								$(this).attr("value",datai[name]);
+								if(name=="password"||name=="confirmpassword"){
+									old_password=datai["password"];
+									$(this).attr("value","");
+									//$(this).attr("readonly","readonly" );
+									
+								}
+							});
+					$("#role_id_select").html(getSelect(editor_role_id,data["op_id"]));
+				});
+	    	}
+			else
+			{
+			    $("#role_id_select").html(getSelect(null),null);
+			}
+ 	});
+
+	function addUser() {
+		var method=(actionType=="add")?"addMonitorUser":"modifyMonitorUser";
+		var dataAll = $("#addUser_form").serializeArray();
+		var data = {};
+		for ( var i = 0; i < dataAll.length; i++) {
+			var datai = dataAll[i];
+			if(datai.name=="password"){
+				if(actionType=="edit"&&datai.value.length<=1){
+					data[datai.name]=old_password;
+					continue;
+				}
+			
+				var confirmpassword=$("#addUser_form").find("#confirmpassword").val();
+				if(datai.value==confirmpassword){
+					datai.value=hex_sha1(datai.value);
+				}else{
+					$("#addUser_form").find("#output").html("新密码两次输入不一致,请重新输入");
+					$("#addUser_form").find("#password").val("");
+					$("#addUser_form").find("#confirmpassword").val("");
+					$("#addUser_form").find("#password").focus();
+					return;
+				}
+			}
+			data[datai.name] = datai.value;
+		}
+		var param = mergeMap({
+			modelName : "MonitorUser",
+			typeName : method,
+			serverName : "service.monitorUserService"
+		},data);
+		JAjax('getJsonString.action', param, 'json', function(x) {
+			// 解析结果json
+			var data = x[0];
+			if(data.result=="1"){
+				document.location.href='userManager.html';
+			}
+			else
+			{
+				$("#addUser_form").find("#output").html(data.msg);
+			}
+		});
+	}
+	function  getSelect(role_id,op_id){
+		var slectStr="";
+		slectStr+="<select name='role_id' id='role_id' ltype='select'>";
+		if(role_id==null)
+		{
+				slectStr+="<option value='0'>管理员</option>";
+				slectStr+="<option value='1' selected>维护员</option>";
+		}
+		else
+		{
+			if(op_id=='1')
+			{
+				slectStr+="<option value='0'>管理员</option>";
+			}
+			else
+			{
+				slectStr+="<option value='0' "+(role_id=='0'?'selected':"")+">管理员</option>";
+				slectStr+="<option value='1' "+(role_id=='1'?'selected':"")+">维护员</option>";
+			}
+		}
+		slectStr+="</select>";
+		return slectStr;
+	}
+	
+	
+</script>
+<title>用户添加修改</title>
+</head>
+<body>
+	<form name="addUser_form" id="addUser_form" method="post" action="#" >
+		<table cellpadding="0" cellspacing="0" class="l-table-edit">
+			<tr>
+				<td align="right" class="l-table-edit-td">真实姓名:</td>
+				<td align="left" class="l-table-edit-td">
+					<div class="l-text">
+						<input type="hidden" name="op_id" id="op_id" value="0"></input>
+						<input name="real_name" type="text"	id="real_name" required="true" validType="length[2,10]" missingMessage="请输入姓名"  />
+					</div>
+				</td>
+				<td align="left"></td>
+			</tr>
+			<tr>
+				<td align="right" class="l-table-edit-td">手机号码:</td>
+				<td align="left" class="l-table-edit-td">
+					<div class="l-text">
+						<input name="mobile" type="text"	id="mobile"  ltype="text" validate="{required:true,minlength:11,maxlength:11}"  />
+					</div>
+				</td>
+				<td align="left"></td>
+			</tr>
+			<tr>
+				<td align="right" class="l-table-edit-td" valign="top">登陆名(邮箱):</td>
+				<td align="left" class="l-table-edit-td">
+					<div class="l-text">
+						<input name="account" type="text" id="account"  type="text" required="true" validType="length[1,50]" missingMessage="请输入登录帐号"/>
+					</div>
+				</td>
+				<td align="left"></td>
+			</tr>
+			<tr>
+				<td align="right" class="l-table-edit-td" valign="top">密码:</td>
+				<td align="left" class="l-table-edit-td">
+					<div class="l-text">
+						<input  name="password"
+							type="text" id="password" ltype="text" validate="{required:true,minlength:6,maxlength:100}" />
+					</div>
+				</td>
+				<td align="left"></td>
+			</tr>
+			<tr>
+				<td align="right" class="l-table-edit-td" valign="top">重复密码</td>
+				<td align="left" class="l-table-edit-td">
+					<div class="l-text">
+						<input  name="confirmpassword"
+							type="text" id="confirmpassword" ltype="text" validate="{required:true,minlength:6,maxlength:100}" />
+					</div>
+				</td>
+				<td align="left"></td>
+			</tr>
+			<tr>
+				<td align="right" class="l-table-edit-td" valign="top">身份:</td>
+				<td align="left" class="l-table-edit-td">
+				<div id="role_id_select">
+				</div>
+				</td>
+				<td align="left"></td>
+			</tr>
+		</table>
+		<br/> 
+		<a href="#" class="easyui-linkbutton" icon="icon-add" onclick="addUser()">提交</a>
+		<a href="userManager.html" class="easyui-linkbutton" icon="icon-cancel">取消</a>
+		<br/>
+	<br/>
+	<br/>
+	<div id="output" class="s_error" style="color:#FF0000;">
+
+		<!-- 错误统计 -->
+	</div>
+	</form>
+	
+</body>
+</html>

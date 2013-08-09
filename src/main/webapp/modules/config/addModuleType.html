@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Editable DataGrid - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/icon.css">
+	<link href="../../easyUI/css/form.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="../common/base64.js"></script>
+	<script type="text/javascript" src="../common/jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="../../easyUI/js/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../../easyUI/js/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../common/common.js"></script>
+<script type="text/javascript" src="../js/addModuleType.js"></script>
+
+
+
+</head>
+
+<body>
+ <form name="moduleTypeForm" action="addpartner.action" method="post" id="moduleTypeForm"> 
+<div class="Pop" id="editconfigDiv" >
+<div id="logurlDIV">
+<div class="right_title">
+      <p style="margin:6px;">新增模板&nbsp;&nbsp;&nbsp;</p>
+</div>
+	 <div class="right_content" >
+<table width="100%" style="margin-top:-20px;">
+<tr>
+	<td>日志地址：</td><td><input class="text easyui-validatebox" value="" name="logurl" id="logurl" required="true" missingMessage="请输入链接地址"/></td>
+	
+	<td>日志编码</td>
+	<td><select id="encoding" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="utf-8">utf-8</option>
+                    <option value="GBK">GBK</option>
+                </select></td>
+	
+	<td><a href="#" class="easyui-linkbutton" icon="icon-save" onclick="fileScan()">扫描</a>&nbsp;&nbsp;&nbsp;<a href="moduleTypeConfig.html" class="easyui-linkbutton" icon="icon-cancel">取消</a></td>
+</tr>
+</table>
+</div>
+</div>
+<div id="showContent" style="display: none;">
+<div class="right_title">
+      <p style="margin:6px;">模板名称&nbsp;&nbsp;&nbsp;</p>
+</div>
+	 <div class="right_content">
+<table width="100%" style="margin-top:-20px;">
+<tr>
+	<td>模板名称</td><td><input class="text easyui-validatebox" name="Module_Type_Name" id="Module_Type_Name" type="text" required="true" validType="length[1,25]" missingMessage="请输入模板名称"/></td>
+	<td>线程间隔</td><td>
+	<select id="threadInterval" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                    <option value="30">30秒</option>
+                    <option value="60">60秒</option>
+                    <option value="180">180秒</option>
+                    <option value="300">300秒</option>
+      </select>
+	</td>
+</tr>
+</table>
+</div>
+<div class="right_title">
+      <p style="margin:6px;">字段描述&nbsp;&nbsp;&nbsp;</p>
+</div>
+	 <div class="right_content">
+<table width="90%" align="center" id="fieldDefinition"  style="margin-top:-20px;">
+<tr>
+	<td>英文字段 </td>
+	<td>中文名称</td>
+	<td>统计显示</td>
+</tr>
+<tr>
+	<td colspan="3" class="line"></td>
+</tr>
+</table>
+</div>
+<p>
+<div class="right_title">
+      <p style="margin:6px;">默认报警设置&nbsp;&nbsp;&nbsp;</p>
+</div>
+	 <div class="right_content">
+<table width="90%" align="center" id="emailAndSmsAlarm"  style="margin-top:-20px;">
+<tr>
+	<td>开始时间</td>
+	<td>结束时间</td>
+	<td>邮件报警</td>
+	<td>短信报警</td>
+</tr>
+<tr>
+	<td colspan="4" class="line"></td>
+</tr>
+<tr>
+	<td><input id="timeStart1" type="text" value="00:00:00" required="true" missingMessage="请选择时间"/></td>
+	<td><input id="timeEnd1" type="text" value="23:59:59" required="true" missingMessage="请选择时间"/></td>
+	<td><input type="checkbox" id="timeMail1" value ="1" ></td>
+	<td><input type="checkbox" id="timeSms1" value ="1" ></td>
+</tr>
+</table>
+<table width="90%">
+<tr>
+	<td align="left" colspan="4"><a href="javascript:addDateEmailAndSmsAlarm()">+增加时段</a></td>
+</tr>
+<tr>
+	<td align="center" colspan="4"><a href="#" class="easyui-linkbutton" icon="icon-add" onclick="sub_addModuleType()">提交</a>&nbsp;&nbsp;&nbsp;<a href="moduleTypeConfig.html" class="easyui-linkbutton" icon="icon-cancel">取消</a></td>
+</tr>
+</table>
+ 
+</div>
+<div class="line"></div>
+</div>
+
+ </div>
+ 
+  </form> 
+</body>
+</html>

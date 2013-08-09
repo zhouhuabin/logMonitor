@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Editable DataGrid - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/icon.css">
+	<link href="../../css/center.css" rel="stylesheet" type="text/css"/>
+	<script type="text/javascript" src="../common/jquery-1.6.min.js"></script>
+	<script type="text/javascript" src="../../easyUI/js/jquery.easyui.min.js"></script>
+	<script src="../common/common.js" type="text/javascript"></script>
+	<script src="../common/util.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../js/historyQuery.js"></script>
+</head>
+<body>
+<div id="ListHistory" style="height: 100%">
+<form id="historyQueryForm" action="#">
+<table class="searchTable" id="searchTable" cellspacing="0"
+	cellpadding="0">
+	<tr>
+		<td class="title" colspan="8"><span class="search_title">查询</span>
+		<!-- <img src="images/ico_small.gif" class="close_img"/> --></td>
+	</tr>
+	<tr>
+		<td colspan="">&nbsp;</td>
+	</tr>
+	<tr>
+		<td class="s_lable">模块类型:</td>
+		<td class="s_value">
+			<select  id="Module_Type_Id" name="Module_Type_Id" class="easyui-combobox" panelHeight="auto" style="width: 130px">
+			</select>
+		</td>
+		<td class="s_lable">开始时间:</td>
+		<td class="s_value"><input id="startTime" name="startTime" class="easyui-datebox" required="true" style="width: 127px"></input></td>
+		<td class="s_lable">结束时间:</td>
+		<td class="s_value"><input id="endTime" name="endTime" class="easyui-datebox" required="true" style="width: 127px"></td>
+	</tr>
+	<tr>
+		<td class="s_lable">模块名称:</td>
+		<td class="s_value">
+			<select  id="Module_ID" name="Module_ID" class="easyui-combobox" panelHeight="auto" style="width: 130px">
+			</select>
+		</td>
+		<td class="s_lable">报警状态:</td>
+		<td class="s_value">
+			<select id="status" name="status" class="easyui-combobox" panelHeight="auto" required="true">
+				<option value="null">全部</option>
+				<option value="0">报警中</option>
+				<option value="1">处理中</option>
+				<option value="2">恢复正常</option>
+			</select>
+		</td>
+		<td class="s_lable">故障类型:</td>
+		<td class="s_value">
+			<select id="report_way" name="report_way" class="easyui-combobox" panelHeight="auto" required="true">
+				<option value="null">全部</option>
+				<option value="0">文件找不到</option>
+				<option value="1">程序报警</option>
+				<option value="2">软分析报警</option>
+				<option value="3">超时报警</option>
+			</select>
+		</td>
+		
+	</tr>
+	<tr class="submissiontd">
+		<td colspan="6" align="center" >
+		<input type="button" value="" class="s_submit"  id="submitButton" onclick="submitForm()" />&nbsp;&nbsp;
+		<input type="reset" value="" class="s_reset" />
+		</td>
+		<!-- <td align="right" >
+		<input type="button" class="l-button l-button-reportExcel"  value="导出报表"  id="reportExcel"/>
+		</td> -->
+	</tr>
+	
+</table>
+</form>
+</div>
+	<table id="alarmHistory-table" width="99%"></table>
+</body>
+<script type="text/javascript" src="../../modules/js/historyQuery.js"></script>
+</html>

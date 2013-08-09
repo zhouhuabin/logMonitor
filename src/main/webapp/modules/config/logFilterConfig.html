@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Editable DataGrid - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/icon.css">
+	<script type="text/javascript" src="../common/jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="../../easyUI/js/jquery.easyui.min.js"></script>
+	<script>
+		
+		$(function(){
+			var lastIndex;
+			$('#tt').datagrid({
+				toolbar:[{
+					text:'增加',
+					iconCls:'icon-add',
+					handler:function(){
+					$('#tt').datagrid('endEdit', lastIndex);
+						$('#tt').datagrid('appendRow',{
+							itemid:'',
+							productid:'',
+							listprice:'',
+							unitprice:'',
+							attr1:'',
+							status:'P'
+						});
+						var lastIndex = $('#tt').datagrid('getRows').length-1;
+						$('#tt').datagrid('selectRow', lastIndex);
+						$('#tt').datagrid('beginEdit', lastIndex);
+					}
+				},'-',{
+					text:'删除',
+					iconCls:'icon-remove',
+					handler:function(){
+						var row = $('#tt').datagrid('getSelected');
+						if (row){
+							var index = $('#tt').datagrid('getRowIndex', row);
+							$('#tt').datagrid('deleteRow', index);
+						}
+					}
+				},'-',{
+					text:'保存',
+					iconCls:'icon-save',
+					handler:function(){
+						$('#tt').datagrid('acceptChanges');
+					}
+				},'-',{
+					text:'撤销',
+					iconCls:'icon-undo',
+					handler:function(){
+						$('#tt').datagrid('rejectChanges');
+					}
+				},'-',{
+					text:'回滚',
+					iconCls:'icon-search',
+					handler:function(){
+						var rows = $('#tt').datagrid('getChanges');
+						alert('changed rows: ' + rows.length + ' lines');
+					}
+				}],
+				onBeforeLoad:function(){
+					$(this).datagrid('rejectChanges');
+				},
+				onClickRow:function(rowIndex){
+					if (lastIndex != rowIndex){
+						$('#tt').datagrid('endEdit', lastIndex);
+						$('#tt').datagrid('beginEdit', rowIndex);
+					}
+					lastIndex = rowIndex;
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+	
+	
+	<table id="tt" style="width:1000px;height:auto"
+			title="模块类型配置" iconCls="icon-edit" singleSelect="true"
+			idField="itemid" url="../../testJson/logFilterConfig.json">
+		<thead>
+			<tr>
+				<th field="filterField" width="200">过滤字段</th>
+				<th field="filterReason" width="400">过滤原因</th>
+			</tr>
+		</thead>
+	</table>
+	
+</body>
+</html>

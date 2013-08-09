@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Editable DataGrid - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../../easyUI/css/themes/icon.css">
+	<link href="../../easyUI/css/form.css" rel="stylesheet" type="text/css" />
+	<link href="../../easyUI/css/windowtip.css" rel="stylesheet" type="text/css"/>
+	<script type="text/javascript" src="../common/base64.js"></script>
+	<script type="text/javascript" src="../common/jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="../../easyUI/js/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="../../easyUI/js/easyui-lang-zh_CN.js"></script>
+	<script type="text/javascript" src="../common/common.js"></script>
+
+
+<script type="text/javascript" src="../js/analysisAlarm.js"></script>
+</head>
+<body >
+<form id="addModuleInfoform" action="addpartner.action" method="post" id="addform">
+	<div class="right">
+    <div class="right_title">
+      <p style="margin:6px;">新增模块&nbsp;&nbsp;&nbsp;</p>
+    </div>
+    <div class="right_content">
+     <table width="100%" style="margin-top:-20px;">
+<tr>
+	<td>城市名</td>
+	<td><select id="cityName" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="未选择">未选择 </option>
+                	<option value="南京">南京 </option>
+                	<option value="珠海">珠海 </option>
+                    <option value="北京">北京</option>
+                    <option value="上海">上海</option>
+                	<option value="杭州">杭州 </option>
+                	<option value="深圳">深圳 </option>
+                	<option value="重庆">重庆 </option>
+                	<option value="成都">成都 </option>
+                	<option value="长沙">长沙 </option>
+                	<option value="福州">福州 </option>
+                	<option value="厦门">厦门 </option>
+                	<option value="泉州">泉州 </option>
+                	<option value="常州">常州 </option>
+                	<option value="东莞">东莞 </option>
+                	<option value="乌鲁木齐">乌鲁木齐 </option>
+                	<option value="武汉">武汉 </option>
+                	<option value="沈阳">沈阳 </option>
+                	<option value="大连">大连 </option>
+                	<option value="南昌">南昌 </option>
+                	<option value="无锡">无锡 </option>
+                    <option value="天津">天津</option>
+                </select></td>
+	<td>模块类型</td>
+	<td>
+	 <select id="module_Type_Id" name="module_Type_Id" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="-1">请选择 </option>
+                </select>
+            </td>
+                <td>模块名称</td>
+	<td><input id="Module_Desc" type="text" class="text easyui-validatebox" required="true" validType="length[1,50]" missingMessage="请输入模块名称"/></td>
+</tr>
+<tr> 
+<tr>
+	<td>日志地址</td>
+	<td><input id="url" type="text" class="text easyui-validatebox" required="true" validType="length[7,30]" missingMessage="请输入日志地址"/></td>
+	<td>日志编码</td>
+	<td><select id="encoding" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="utf-8">utf-8</option>
+                    <option value="GBK">GBK</option>
+                   
+                </select></td>
+	<td>错误次数</td>
+	<td><select id="errorValve" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="1">1 </option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5 </option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                </select></td>
+</tr>
+<tr>
+	<td>超时时间(秒)</td>
+	<td><input class="text easyui-numberbox" id="timeValue" type="text"  required="true" missingMessage="请输入超时时间"/></td>
+	<td>扫描状态</td>
+	<td colspan="5">
+				 <select id="ScanState" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                    <option value="1">开启</option>
+                    <option value="0">关闭</option>
+                </select>
+	</td>
+</tr>
+</table>
+  
+ </div>
+ 
+  <div class="right_title">
+      <p style="margin:6px;">报警开关设置&nbsp;&nbsp;&nbsp;</p>
+    </div>
+     <div class="right_content">
+       <table id="emailAndSmsAlarm"  width="100%" style="margin-top:-20px;">
+<tr>
+	<td>开始时间</td>
+	<td>结束时间</td>
+	<td>邮件报警</td>
+	<td>短信报警</td>
+</tr>
+<tr>
+	<td colspan="4" class="line"></td>
+</tr>
+
+</table>
+</div>
+ 
+ 
+ 
+ 
+ <div class="right_title">
+      <p style="margin:6px;">软分析报警设置&nbsp;&nbsp;&nbsp;</p>
+    </div>
+    <div class="right_content">
+<table id="analysisAlarm" width="100%" style="margin-top:-20px;">
+<tr>
+	<td>软分析字段</td>
+	<td>条件</td>
+	<td>条件值</td>
+</tr>
+<tr>
+	<td colspan="3" class="line"></td>
+</tr>
+<tr>	
+	<td>
+	<select id="analysisPRO0" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="-1">请选择 </option>
+                </select>
+	</td>
+	<td>
+ 			<select id="analysisCON0" style="border:1px solid #8bb3e4;width:150px; float:left; height:22px;">
+                	<option value="-1">请选择 </option>
+                    <option value=">">大于</option>
+                    <option value="==">等于</option>
+                    <option value="<">小于</option>
+                </select>
+    </td>
+	<td><input class="text easyui-validatebox" id="analysisCONVALUE0" type="text" required="true" validType="length[1,25]" missingMessage="请输入软分析值"/></td>
+</tr>
+</table>      
+ <table width="90%" align="center">
+	<tr>
+		<td align="left" colspan="4"><a href="javascript:addAnalysisAlarm()">+增加软分析条件</a><font color="red">(若要删除条件,请将软分析字段/条件设为"请选择"进行提交)</font></td>
+	</tr>
+</table>
+ </div> 
+<p style="text-align:center;margin:0 auto;"><a href="#" class="easyui-linkbutton" icon="icon-add" onclick="addModuleInfo()">提交</a>&nbsp;&nbsp;&nbsp;<a href="moduleConfig.html" class="easyui-linkbutton" icon="icon-cancel">取消</a></p>
+</div>
+ <div class="right_content">
+ <!-- table id="analysisAlarm-table" width="100%"></table-->
+ </div>
+ <script type="text/javascript" src="../../modules/js/addModuleInfo.js"></script> .
+ </form>  
+</body>
+</html>
