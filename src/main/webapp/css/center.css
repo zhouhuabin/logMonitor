@@ -103,7 +103,7 @@
 	border-bottom:#a3c0e8 1px solid;
 	/**background:#E5F3FE;*/
 	height:26px;
-	background: url(../images/deletePop/header-bg.gif) repeat-x;
+	background: url(../images/header-bg.gif) repeat-x;
 	margin:0 auto;
 	text-align:center;
 }
@@ -274,7 +274,7 @@
 
 .openwindow .delete_title {
 	font-weight: bold;
-	background: url("../images/deletePop/bin_closed.png") no-repeat 1px 0px;
+	background: url("../images/bin_closed.png") no-repeat 1px 0px;
 	padding-left: 15px;
 	width: auto;
 	height: 17px;
@@ -286,7 +286,7 @@
 
 .searchTable .search_title {
 	font-weight: bold;
-	background: url("../images/deletePop/button05.png") no-repeat 2px 1px;
+	background: url("../images/right_bottom_bg.gif") no-repeat 2px 1px;
 	padding-left: 15px;
 	width: auto;
 	height: 17px;
@@ -423,7 +423,7 @@
 
 
 .searchTable .s_submit {
-	background: url("../images/butt1.jpg") no-repeat;
+	background: url("../images/submit_b.gif") no-repeat;
 	width: 70px;
 	height: 22px;
 	border: none;

@@ -28,13 +28,13 @@ a:active{color:#2c6795; text-decoration:none; font-weight:normal;}
 
 .login_content{background:url(../images/login/login_conbg.jpg) center center;}
 
-.login_box{position:absolute; width:799px; height:375px; background:url(../images/login_box.png) no-repeat;}
+.login_box{position:absolute; width:799px; height:375px; background:url(../images/login_bg.gif) no-repeat;}
 
 .logo{ width:473px; height:58px; line-height:58px; background:url(../images/logo.png) no-repeat; margin-top:50px; margin-left:240px; display:table;}
 
 /*登录页面背景*/
 
-.login_bj{width:337px; height:217px; background:url(../images/login-bj.png) no-repeat; margin-left:350px; margin-top:100px;}
+.login_bj{width:337px; height:217px; background:url(../images/login_bg.gif) no-repeat; margin-left:350px; margin-top:100px;}
 
 .input{width:150px; height:18px; background:#FFFFFF; border:#3399CC solid 1px;}
 
