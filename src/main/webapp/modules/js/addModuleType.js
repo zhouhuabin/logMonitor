@@ -72,7 +72,7 @@ function fileScan()
 	     success: function(data, textStatus)
 	     {
 	    	var rel=data;
-	    	 if(!rel.erro_)
+	    	 if(rel.erro_)
 	    		{
 	    			$('#fieldDefinition').append(rel.erro_);
 	    		}
