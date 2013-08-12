@@ -2,10 +2,10 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>palmcity</groupId>
-	<artifactId>maintenanceMonitor</artifactId>
+	<artifactId>logMonitor</artifactId>
 	<packaging>war</packaging>
 	<version>1.0.4</version>
-	<name>maintenanceMonitor Maven Webapp</name>
+	<name>logMonitor Maven Webapp</name>
 	<url>http://maven.apache.org</url>
 	<dependencies>
 		<dependency>
@@ -173,13 +173,6 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>
-			<groupId>palmcity</groupId>
-			<artifactId>lbs-platform</artifactId>
-			<version>1.1.9</version>
-			<scope>system</scope>
-			<systemPath>${systemlib}\lbs-platform-1.1.9.jar</systemPath>
-		</dependency>
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}-${project.version}</finalName>
@@ -228,7 +221,7 @@
 
 					<connectors>
 						<connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-							<port>8080</port>
+							<port>9090</port>
 							<maxIdleTime>60000</maxIdleTime>
 						</connector>
 					</connectors>
